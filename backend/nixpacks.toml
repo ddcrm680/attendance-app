@@ -1,0 +1,18 @@
+# Railway build config for the Laravel API.
+# Railway auto-detects nixpacks.toml — no dashboard build-command setup needed.
+
+[phases.setup]
+nixPkgs = ["php83", "php83Packages.composer", "nodejs-18_x"]
+
+[phases.install]
+cmds = ["composer install --no-dev --optimize-autoloader"]
+
+[phases.build]
+cmds = [
+  "php artisan config:cache",
+  "php artisan route:cache",
+]
+
+[start]
+# Runs migrations on every deploy, then boots the built-in server on Railway's assigned port.
+cmd = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
