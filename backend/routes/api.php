@@ -15,8 +15,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
     Route::prefix('attendance')->group(function () {
-        Route::post('/check-in', [AttendanceController::class, 'checkInTest']);
-        Route::post('/check-out', [AttendanceController::class, 'checkOutTest']);
+        Route::post('/check-in', [AttendanceController::class, 'checkIn']);
+        Route::post('/check-out', [AttendanceController::class, 'checkOut']);
         Route::get('/today', [AttendanceController::class, 'today']);
         Route::get('/history', [AttendanceController::class, 'history']);
     });
