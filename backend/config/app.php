@@ -28,6 +28,7 @@ return [
         Illuminate\Cache\CacheServiceProvider::class,
         Illuminate\Hashing\HashServiceProvider::class,
         Illuminate\Translation\TranslationServiceProvider::class,
+        Illuminate\Queue\QueueServiceProvider::class,
 
         Illuminate\Session\SessionServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
