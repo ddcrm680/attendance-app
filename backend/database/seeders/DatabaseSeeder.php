@@ -16,10 +16,10 @@ class DatabaseSeeder extends Seeder
         $sales = Department::create(['name' => 'Sales']);
 
         $office = Office::create([
-            'name' => 'Delhi Head Office',
-            'address' => 'Connaught Place, New Delhi',
-            'latitude' => 28.6139,
-            'longitude' => 77.2090,
+            'name' => 'Detailing Devils Black Studio',
+            'address' => 'B-24, Pushpanjali Enclave, Pitampura, New Delhi, Delhi, 110034',
+            'latitude' => 28.6958241,
+            'longitude' => 77.1113803,
             'radius' => 200,
         ]);
 
