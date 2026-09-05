@@ -1,6 +1,20 @@
 # Attendance Management Platform
 
-Laravel 11 API plus a Next.js 14 employee/admin application. The system uses SQLite, Sanctum bearer tokens, private attendance media, server-authoritative attendance/GPS rules, live tracking for open sessions, leave/WFH/calendar support, reporting, WhatsApp queue delivery, retention, and audit logs.
+Laravel 11 API plus a Next.js 14 employee/admin application for secure attendance, location verification, leave, WFH, reporting, and administration. The system uses SQLite, Sanctum bearer tokens, private attendance media, server-authoritative attendance/GPS rules, live tracking for open sessions, WhatsApp queue delivery, retention, and audit logs.
+
+## Main features
+
+- Secure Office/WFH check-in and check-out with mandatory selfie and verified GPS.
+- Server-calculated working time, late/early/overtime status, calendar, leave, and holidays.
+- Live location tracking during open attendance sessions.
+- Employee self-service history and privacy views.
+- Authorized administration, dashboards, reports, CSV/XLSX/PDF exports, WhatsApp delivery, and audit logs.
+
+## Tech stack
+
+- Backend: Laravel 11, PHP 8.3+, Sanctum, SQLite.
+- Frontend: Next.js 14, React, TypeScript, Tailwind CSS.
+- Deployment: separate backend and frontend services on Railway.
 
 ## Repository layout
 
@@ -61,6 +75,18 @@ The local/demo accounts all use `password123`: `admin@example.com` (Super Admin)
 - When WhatsApp is enabled, use `QUEUE_CONNECTION=database` and run `php artisan queue:work`. Configure only server-side `WHATSAPP_*` variables from `.env.production.example`.
 - Run the scheduler every minute in deployment infrastructure (`php artisan schedule:run`). It registers the daily WhatsApp summary and the opt-in privacy retention cleanup.
 - Retention cleanup is disabled by default. Approve values for `ATTENDANCE_PHOTO_RETENTION_DAYS` and `LOCATION_LOG_RETENTION_DAYS`, set `PRIVACY_RETENTION_ENABLED=true`, then use `php artisan privacy:cleanup`.
+
+## Testing
+
+Run the backend suite with vendor/bin/phpunit --do-not-cache-result. Check the frontend with npx tsc --noEmit and build it with npm run build.
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [API reference](docs/api.md)
+- [Application flows](docs/flows.md)
+- [Development guide](docs/development.md)
+- [Railway deployment](docs/deployment.md)
 
 ## Browser behavior
 
