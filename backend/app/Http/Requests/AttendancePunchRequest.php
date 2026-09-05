@@ -35,7 +35,12 @@ class AttendancePunchRequest extends LocationUpdateRequest
         ]);
     }
 
-    protected function prepareForValidation(): void { $this->merge(['mode' => $this->input('mode', 'office')]); }
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'mode' => $this->input('mode', 'office'),
+        ]);
+    }
 
     public function messages(): array
     {

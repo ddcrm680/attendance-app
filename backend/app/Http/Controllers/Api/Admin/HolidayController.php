@@ -1,4 +1,69 @@
 <?php
+
 namespace App\Http\Controllers\Api\Admin;
-use App\Http\Controllers\Controller;use App\Models\Holiday;use App\Services\AuditService;use Illuminate\Http\Request;
-class HolidayController extends Controller { public function __construct(private AuditService $audit) {} public function index(){return response()->json(Holiday::orderBy('holiday_date')->get());} public function store(Request $request){$data=$request->validate(['name'=>['required','string','max:255'],'holiday_date'=>['required','date'],'active'=>['sometimes','boolean']]);if(Holiday::whereDate('holiday_date',$data['holiday_date'])->exists())return response()->json(['message'=>'A holiday already exists for this date.'],422);$holiday=Holiday::create($data);$this->audit->record($request,'holiday.created',$holiday,['active'=>$holiday->active]);return response()->json($holiday,201);} public function update(Request $request,Holiday $holiday){$data=$request->validate(['name'=>['sometimes','string','max:255'],'holiday_date'=>['sometimes','date','unique:holidays,holiday_date,'.$holiday->id],'active'=>['sometimes','boolean']]);$holiday->update($data);$this->audit->record($request,'holiday.updated',$holiday,['changed_fields'=>array_keys($data),'active'=>$holiday->active]);return response()->json($holiday);} public function destroy(Request $request,Holiday $holiday){$this->audit->record($request,'holiday.deleted',$holiday);$holiday->delete();return response()->json(['message'=>'Holiday removed']);} }
+
+use App\Http\Controllers\Controller;
+use App\Models\Holiday;
+use App\Services\AuditService;
+use Illuminate\Http\Request;
+
+class HolidayController extends Controller
+{
+    public function __construct(private AuditService $audit) {}
+
+    public function index()
+    {
+        return response()->json(Holiday::orderBy('holiday_date')->get());
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'holiday_date' => ['required', 'date'],
+            'active' => ['sometimes', 'boolean'],
+        ]);
+
+        if (Holiday::whereDate('holiday_date', $data['holiday_date'])->exists()) {
+            return response()->json([
+                'message' => 'A holiday already exists for this date.',
+            ], 422);
+        }
+
+        $holiday = Holiday::create($data);
+        $this->audit->record($request, 'holiday.created', $holiday, [
+            'active' => $holiday->active,
+        ]);
+
+        return response()->json($holiday, 201);
+    }
+
+    public function update(Request $request, Holiday $holiday)
+    {
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'holiday_date' => [
+                'sometimes',
+                'date',
+                'unique:holidays,holiday_date,'.$holiday->id,
+            ],
+            'active' => ['sometimes', 'boolean'],
+        ]);
+
+        $holiday->update($data);
+        $this->audit->record($request, 'holiday.updated', $holiday, [
+            'changed_fields' => array_keys($data),
+            'active' => $holiday->active,
+        ]);
+
+        return response()->json($holiday);
+    }
+
+    public function destroy(Request $request, Holiday $holiday)
+    {
+        $this->audit->record($request, 'holiday.deleted', $holiday);
+        $holiday->delete();
+
+        return response()->json(['message' => 'Holiday removed']);
+    }
+}

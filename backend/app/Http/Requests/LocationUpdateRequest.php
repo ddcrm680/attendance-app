@@ -6,7 +6,10 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class LocationUpdateRequest extends FormRequest
 {
-    public function authorize(): bool { return $this->user() !== null; }
+    public function authorize(): bool
+    {
+        return $this->user() !== null;
+    }
 
     public function rules(): array
     {

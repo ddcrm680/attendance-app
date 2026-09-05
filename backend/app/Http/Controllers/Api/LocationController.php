@@ -12,7 +12,10 @@ use App\Services\AttendanceSettingsResolver;
 
 class LocationController extends Controller
 {
-    public function __construct(private VerifiedLocationService $locations, private AttendanceSettingsResolver $settings) {}
+    public function __construct(
+        private VerifiedLocationService $locations,
+        private AttendanceSettingsResolver $settings,
+    ) {}
 
     public function update(LocationUpdateRequest $request)
     {
@@ -27,24 +30,38 @@ class LocationController extends Controller
             ->first();
 
         if (! $attendance) {
-            return response()->json(['message' => 'No active check-in session. Location tracking only runs between check-in and check-out.'], 409);
+            return response()->json([
+                'message' => 'No active check-in session. Location tracking only runs between check-in and check-out.',
+            ], 409);
         }
         if ($attendance->mode === 'wfh' && ! $this->settings->forOffice($attendance->office)?->wfh_tracking_enabled) {
-            return response()->json(['message' => 'Live tracking is disabled for this work-from-home session.'], 403);
+            return response()->json([
+                'message' => 'Live tracking is disabled for this work-from-home session.',
+            ], 403);
         }
 
         $data = $request->validated();
         if (isset($data['attendance_id']) && (int) $data['attendance_id'] !== $attendance->id) {
-            return response()->json(['message' => 'The location update does not belong to your active attendance session.'], 403);
+            return response()->json([
+                'message' => 'The location update does not belong to your active attendance session.',
+            ], 403);
         }
 
         if (! $attendance->office) {
-            return response()->json(['message' => 'The attendance office is no longer available. Contact HR.'], 422);
+            return response()->json([
+                'message' => 'The attendance office is no longer available. Contact HR.',
+            ], 422);
         }
         $interval = $this->trackingInterval($attendance);
-        $lastLog = LocationLog::where('attendance_id', $attendance->id)->orderByDesc('recorded_at')->orderByDesc('id')->first();
+        $lastLog = LocationLog::where('attendance_id', $attendance->id)
+            ->orderByDesc('recorded_at')
+            ->orderByDesc('id')
+            ->first();
         if ($lastLog && $lastLog->recorded_at->greaterThan(now()->subSeconds($interval))) {
-            return response()->json(['message' => 'Location update is already current.', 'tracking_interval_seconds' => $interval], 202);
+            return response()->json([
+                'message' => 'Location update is already current.',
+                'tracking_interval_seconds' => $interval,
+            ], 202);
         }
         $location = $this->locations->verify($attendance->office, $data);
         $log = LocationLog::create([
@@ -87,9 +104,22 @@ class LocationController extends Controller
     public function trackingStatus(Request $request)
     {
         $this->authorize('viewAny', LocationLog::class);
-        $attendance = Attendance::where('employee_id', $request->user()->id)->whereNotNull('check_in')->whereNull('check_out')->orderByDesc('attendance_date')->first();
-        $active = $attendance && ! ($attendance->mode === 'wfh' && ! $this->settings->forOffice($attendance->office)?->wfh_tracking_enabled);
-        return response()->json(['active' => (bool) $active, 'attendance_id' => $active ? $attendance->id : null, 'tracking_interval_seconds' => $active ? $this->trackingInterval($attendance) : null]);
+        $attendance = Attendance::where('employee_id', $request->user()->id)
+            ->whereNotNull('check_in')
+            ->whereNull('check_out')
+            ->orderByDesc('attendance_date')
+            ->first();
+        $active = $attendance
+            && ! ($attendance->mode === 'wfh'
+                && ! $this->settings->forOffice($attendance->office)?->wfh_tracking_enabled);
+
+        return response()->json([
+            'active' => (bool) $active,
+            'attendance_id' => $active ? $attendance->id : null,
+            'tracking_interval_seconds' => $active
+                ? $this->trackingInterval($attendance)
+                : null,
+        ]);
     }
 
     private function trackingInterval(Attendance $attendance): int

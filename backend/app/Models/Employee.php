@@ -15,18 +15,28 @@ class Employee extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
-        "employee_code", "name", "email", "mobile", "password", "role",
-        "department_id", "designation", "office_id", "joining_date", "status", "wfh_eligible",
+        'employee_code',
+        'name',
+        'email',
+        'mobile',
+        'password',
+        'role',
+        'department_id',
+        'designation',
+        'office_id',
+        'joining_date',
+        'status',
+        'wfh_eligible',
     ];
 
-    protected $hidden = ["password", "remember_token"];
+    protected $hidden = ['password', 'remember_token'];
 
     protected function casts(): array
     {
         return [
-            "password" => "hashed",
-            "joining_date" => "date",
-            "wfh_eligible" => "boolean",
+            'password' => 'hashed',
+            'joining_date' => 'date',
+            'wfh_eligible' => 'boolean',
         ];
     }
 
@@ -50,12 +60,19 @@ class Employee extends Authenticatable
         return $this->hasMany(LocationLog::class);
     }
 
-    public function leaveRequests(): HasMany { return $this->hasMany(LeaveRequest::class); }
-    public function wfhRequests(): HasMany { return $this->hasMany(WfhRequest::class); }
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function wfhRequests(): HasMany
+    {
+        return $this->hasMany(WfhRequest::class);
+    }
 
     public function isAdmin(): bool
     {
-        return in_array($this->role, ["super_admin", "hr_admin"], true);
+        return in_array($this->role, ['super_admin', 'hr_admin'], true);
     }
 
     public function isSuperAdmin(): bool

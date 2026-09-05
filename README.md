@@ -1,4 +1,4 @@
-# Attendance and live-location tracking
+# Attendance Management Platform
 
 Laravel 11 API plus a Next.js 14 employee/admin application. The system uses SQLite, Sanctum bearer tokens, private attendance media, server-authoritative attendance/GPS rules, live tracking for open sessions, leave/WFH/calendar support, reporting, WhatsApp queue delivery, retention, and audit logs.
 
@@ -11,6 +11,16 @@ attendance-app/
   backend/   Laravel API
   frontend/  Next.js application
 ```
+
+## Roles and access
+
+The supported roles are `employee`, `hr_admin` (HR Admin), and `super_admin`.
+
+- **Employee:** employee dashboard, secure punch-in/out, own attendance and history, own leave/WFH/calendar access, and privacy, PWA, and offline status information.
+- **HR Admin:** authorized administrative screens, employee/department/office management as permitted, attendance and reporting, leave/holiday/WFH management, live locations, WhatsApp and audit access according to backend authorization, plus the HR user’s own attendance, leave, and WFH self-service. HR Admin cannot perform Super Admin-only actions.
+- **Super Admin:** full authorized administrative capabilities and privileged controls, plus the Super Admin user’s own attendance, leave, and WFH self-service.
+
+Backend authentication, authorization, and ownership policies are authoritative. Frontend role visibility is a usability aid, not a security boundary.
 
 ## Local setup
 
@@ -36,7 +46,11 @@ npm run dev
 
 Set `NEXT_PUBLIC_API_URL` only to the API base URL, for example `http://localhost:8000/api`. Do not place backend secrets in frontend environment variables.
 
-The seeded local/demo accounts are `admin@example.com` / `password123` and `raj.kumar@example.com` / `password123`. Replace or remove them outside local/demo environments.
+### Local demo data
+
+`DatabaseSeeder` creates realistic deterministic scenarios for multiple departments and offices, multiple roles, WFH-eligible and non-WFH-eligible employees, pending/approved/rejected leave, pending/approved/rejected WFH requests, active/inactive holidays, and representative historical attendance records. It intentionally does not create private photo fixtures, fake location logs, WhatsApp credentials, or open attendance sessions.
+
+The local/demo accounts all use `password123`: `admin@example.com` (Super Admin), `hr@example.com` (HR Admin), `alice.office@example.com` (office employee), `rohan.wfh@example.com` (WFH-eligible employee), `meera.sales@example.com` (non-WFH employee), `kabir.ops@example.com` (WFH-eligible employee), and `inactive.demo@example.com` (inactive employee). These credentials are for local demo data only; never use them outside local development.
 
 ## Operations
 

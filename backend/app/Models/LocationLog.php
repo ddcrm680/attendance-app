@@ -9,7 +9,14 @@ class LocationLog extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = ["employee_id", "attendance_id", "latitude", "longitude", "accuracy", "recorded_at"];
+    protected $fillable = [
+        'employee_id',
+        'attendance_id',
+        'latitude',
+        'longitude',
+        'accuracy',
+        'recorded_at',
+    ];
 
     protected function casts(): array
     {

@@ -23,17 +23,27 @@ class SendWhatsAppMessage implements ShouldQueue
 
     public function __construct(public int $logId) {}
 
-    public function middleware(): array { return [new RateLimited('whatsapp')]; }
+    public function middleware(): array
+    {
+        return [new RateLimited('whatsapp')];
+    }
 
     public function handle(WhatsAppProvider $provider, WhatsAppNotificationService $notifications): void
     {
         $log = WhatsAppMessageLog::find($this->logId);
-        if (! $log || $log->status === 'sent') return;
+        if (! $log || $log->status === 'sent') {
+            return;
+        }
 
         $log->update(['status' => 'processing', 'attempts' => $log->attempts + 1, 'error_message' => null]);
         try {
             $result = $provider->send($log->getRawOriginal('recipient'), $notifications->bodyFor($log), $this->photoPath($log));
-            $log->update(['status' => 'sent', 'provider_message_id' => $result['message_id'] ?? null, 'sent_at' => now(), 'error_message' => null]);
+            $log->update([
+                'status' => 'sent',
+                'provider_message_id' => $result['message_id'] ?? null,
+                'sent_at' => now(),
+                'error_message' => null,
+            ]);
         } catch (WhatsAppPermanentException $exception) {
             $log->update(['status' => 'failed', 'failed_at' => now(), 'error_message' => $this->safeError($exception)]);
             $this->fail($exception);
@@ -45,14 +55,33 @@ class SendWhatsAppMessage implements ShouldQueue
 
     public function failed(?Throwable $exception): void
     {
-        WhatsAppMessageLog::whereKey($this->logId)->where('status', '!=', 'sent')->update(['status' => 'failed', 'failed_at' => now(), 'error_message' => $exception ? $this->safeError($exception) : 'Delivery failed.']);
+        WhatsAppMessageLog::whereKey($this->logId)
+            ->where('status', '!=', 'sent')
+            ->update([
+                'status' => 'failed',
+                'failed_at' => now(),
+                'error_message' => $exception
+                    ? $this->safeError($exception)
+                    : 'Delivery failed.',
+            ]);
     }
 
-    private function safeError(Throwable $exception): string { return str($exception->getMessage())->replaceMatches('/(token|bearer|secret|password)[^\s]*/i', '$1 [redacted]')->limit(240)->toString(); }
+    private function safeError(Throwable $exception): string
+    {
+        return str($exception->getMessage())
+            ->replaceMatches('/(token|bearer|secret|password)[^\s]*/i', '$1 [redacted]')
+            ->limit(240)
+            ->toString();
+    }
 
     private function photoPath(WhatsAppMessageLog $log): ?string
     {
-        if (! config('whatsapp.attach_attendance_photo') || ! in_array($log->notification_type, ['punch_in', 'punch_out'], true)) return null;
+        if (
+            ! config('whatsapp.attach_attendance_photo')
+            || ! in_array($log->notification_type, ['punch_in', 'punch_out'], true)
+        ) {
+            return null;
+        }
         $attendance = $log->attendance;
         return $attendance?->getRawOriginal($log->notification_type === 'punch_in' ? 'check_in_photo_path' : 'check_out_photo_path');
     }

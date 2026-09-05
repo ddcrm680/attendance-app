@@ -11,7 +11,14 @@ class Office extends Model
 {
     use HasFactory;
 
-    protected $fillable = ["name", "address", "latitude", "longitude", "radius", "status"];
+    protected $fillable = [
+        'name',
+        'address',
+        'latitude',
+        'longitude',
+        'radius',
+        'status',
+    ];
 
     protected function casts(): array
     {

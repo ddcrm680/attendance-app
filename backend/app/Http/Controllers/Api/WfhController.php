@@ -1,4 +1,48 @@
 <?php
+
 namespace App\Http\Controllers\Api;
-use App\Http\Controllers\Controller;use App\Models\WfhRequest;use Illuminate\Http\Request;
-class WfhController extends Controller { public function index(Request $request){return response()->json(WfhRequest::where('employee_id',$request->user()->id)->latest('attendance_date')->paginate(30));} public function store(Request $request){$data=$request->validate(['attendance_date'=>['required','date','after_or_equal:today'],'reason'=>['nullable','string','max:2000']]);if(!$request->user()->wfh_eligible)return response()->json(['message'=>'Work from home is not available for your account.'],403);$existing=WfhRequest::where('employee_id',$request->user()->id)->where('attendance_date',$data['attendance_date'])->first();if($existing)return response()->json(['message'=>'A work-from-home request already exists for this date.'],409);return response()->json(WfhRequest::create($data+['employee_id'=>$request->user()->id]),201);} }
+
+use App\Http\Controllers\Controller;
+use App\Models\WfhRequest;
+use Illuminate\Http\Request;
+
+class WfhController extends Controller
+{
+    public function index(Request $request)
+    {
+        return response()->json(
+            WfhRequest::where('employee_id', $request->user()->id)
+                ->latest('attendance_date')
+                ->paginate(30)
+        );
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'attendance_date' => ['required', 'date', 'after_or_equal:today'],
+            'reason' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        if (! $request->user()->wfh_eligible) {
+            return response()->json([
+                'message' => 'Work from home is not available for your account.',
+            ], 403);
+        }
+
+        $existing = WfhRequest::where('employee_id', $request->user()->id)
+            ->where('attendance_date', $data['attendance_date'])
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'message' => 'A work-from-home request already exists for this date.',
+            ], 409);
+        }
+
+        return response()->json(
+            WfhRequest::create($data + ['employee_id' => $request->user()->id]),
+            201
+        );
+    }
+}
