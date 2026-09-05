@@ -13,3 +13,5 @@
 /database/*.sqlite
 /database/*.sqlite3
 /storage/logs/*.log
+/storage/app/*
+/storage/framework/testing/*

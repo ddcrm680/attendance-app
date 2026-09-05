@@ -21,7 +21,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const links = [
     { href: '/admin', label: 'Dashboard' },
     { href: '/admin/employees', label: 'Employees' },
+    { href: '/admin/departments', label: 'Departments' },
     { href: '/admin/offices', label: 'Offices' },
+    { href: '/admin/live-locations', label: 'Live map' },
+    { href: '/admin/attendance', label: 'Attendance' },
+    { href: '/admin/whatsapp', label: 'WhatsApp' },
+    { href: '/admin/audit', label: 'Audit log' },
   ];
 
   return (

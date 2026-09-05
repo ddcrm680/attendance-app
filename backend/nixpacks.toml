@@ -2,7 +2,7 @@
 # Railway auto-detects nixpacks.toml — no dashboard build-command setup needed.
 
 [phases.setup]
-nixPkgs = ["php83", "php83Packages.composer", "nodejs-18_x"]
+nixPkgs = ["php83", "php83Packages.composer"]
 
 [phases.install]
 cmds = ["composer install --no-dev --optimize-autoloader"]
@@ -14,5 +14,6 @@ cmds = [
 ]
 
 [start]
-# Runs migrations on every deploy, then boots the built-in server on Railway's assigned port.
-cmd = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
+# The Railway volume must be mounted at /data. The SQLite file is created there
+# before migrations so it persists across deployments.
+cmd = "mkdir -p /data && touch /data/database.sqlite && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"

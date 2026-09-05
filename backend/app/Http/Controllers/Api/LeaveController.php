@@ -1,0 +1,9 @@
+<?php
+namespace App\Http\Controllers\Api;
+use App\Http\Controllers\Controller; use App\Models\LeaveRequest; use App\Models\LeaveType; use Illuminate\Http\Request; use Illuminate\Validation\Rule; use Illuminate\Validation\ValidationException;
+class LeaveController extends Controller {
+ public function types(){return response()->json(LeaveType::where('active',true)->orderBy('name')->get());}
+ public function index(Request $request){return response()->json(LeaveRequest::with('leaveType')->where('employee_id',$request->user()->id)->latest()->paginate(30));}
+ public function store(Request $request){$data=$request->validate(['leave_type_id'=>['required',Rule::exists('leave_types','id')->where('active',true)],'start_date'=>['required','date','after_or_equal:today'],'end_date'=>['required','date','after_or_equal:start_date'],'reason'=>['nullable','string','max:2000']]); $type=LeaveType::findOrFail($data['leave_type_id']); if($type->reason_required&&!filled($data['reason']))throw ValidationException::withMessages(['reason'=>['A reason is required for this leave type.']]); $overlap=LeaveRequest::where('employee_id',$request->user()->id)->whereIn('status',['pending','approved'])->where('start_date','<=',$data['end_date'])->where('end_date','>=',$data['start_date'])->exists(); if($overlap)throw ValidationException::withMessages(['dates'=>['This leave overlaps an existing request.']]); return response()->json(LeaveRequest::create($data+['employee_id'=>$request->user()->id])->load('leaveType'),201);}
+ public function cancel(Request $request,LeaveRequest $leave){abort_unless($leave->employee_id===$request->user()->id,403); if($leave->status!=='pending')return response()->json(['message'=>'Only pending leave requests can be cancelled.'],409); $leave->update(['status'=>'cancelled','cancelled_at'=>now()]);return response()->json($leave);}
+}

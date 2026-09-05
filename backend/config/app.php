@@ -16,6 +16,8 @@ return [
         'driver' => 'file',
     ],
     'providers' => [
+        App\Providers\AppServiceProvider::class,
+        App\Providers\AuthServiceProvider::class,
         Illuminate\Auth\AuthServiceProvider::class,
         Illuminate\Cookie\CookieServiceProvider::class,
         Illuminate\Database\DatabaseServiceProvider::class,
@@ -26,6 +28,7 @@ return [
         Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
 
         Illuminate\Cache\CacheServiceProvider::class,
+        Illuminate\Bus\BusServiceProvider::class,
         Illuminate\Hashing\HashServiceProvider::class,
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Queue\QueueServiceProvider::class,

@@ -16,7 +16,7 @@ class Employee extends Authenticatable
 
     protected $fillable = [
         "employee_code", "name", "email", "mobile", "password", "role",
-        "department_id", "designation", "office_id", "joining_date", "status",
+        "department_id", "designation", "office_id", "joining_date", "status", "wfh_eligible",
     ];
 
     protected $hidden = ["password", "remember_token"];
@@ -26,6 +26,7 @@ class Employee extends Authenticatable
         return [
             "password" => "hashed",
             "joining_date" => "date",
+            "wfh_eligible" => "boolean",
         ];
     }
 
@@ -49,8 +50,26 @@ class Employee extends Authenticatable
         return $this->hasMany(LocationLog::class);
     }
 
+    public function leaveRequests(): HasMany { return $this->hasMany(LeaveRequest::class); }
+    public function wfhRequests(): HasMany { return $this->hasMany(WfhRequest::class); }
+
     public function isAdmin(): bool
     {
         return in_array($this->role, ["super_admin", "hr_admin"], true);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    public function isHrAdmin(): bool
+    {
+        return $this->role === 'hr_admin';
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
     }
 }

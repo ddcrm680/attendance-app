@@ -3,24 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LoginRequest;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'identifier' => ['required', 'string'],
-            'password' => ['required', 'string'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 422);
-        }
-
         $identifier = $request->input('identifier');
         $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'mobile';
 
@@ -34,7 +25,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Your account is not active. Contact HR.'], 403);
         }
 
-        $token = $employee->createToken('attendance-app')->plainTextToken;
+        $ability = $employee->isSuperAdmin()
+            ? 'super-admin'
+            : ($employee->isHrAdmin() ? 'admin' : 'employee');
+        $token = $employee->createToken('attendance-app', [$ability])->plainTextToken;
 
         return response()->json([
             'token' => $token,
@@ -44,7 +38,7 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $request->user()->currentAccessToken()?->delete();
 
         return response()->json(['message' => 'Logged out']);
     }

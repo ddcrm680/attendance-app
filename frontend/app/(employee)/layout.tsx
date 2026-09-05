@@ -21,6 +21,8 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   const tabs = [
     { href: '/dashboard', label: 'Home' },
     { href: '/history', label: 'Attendance' },
+    { href: '/leave', label: 'Leave' },
+    { href: '/privacy', label: 'Privacy' },
   ];
 
   return (
