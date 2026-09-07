@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Models\Employee;
+use App\Services\AttendanceSettingsResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public function __construct(private AttendanceSettingsResolver $settings) {}
+
     public function login(LoginRequest $request)
     {
         $identifier = $request->input('identifier');
@@ -32,7 +35,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'employee' => $employee->load(['department', 'office']),
+            'employee' => $this->withWfhAvailability($employee),
         ]);
     }
 
@@ -45,6 +48,15 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        return response()->json($request->user()->load(['department', 'office']));
+        return response()->json($this->withWfhAvailability($request->user()));
+    }
+
+    private function withWfhAvailability(Employee $employee): Employee
+    {
+        $employee->load(['department', 'office']);
+        $employee->setAttribute('wfh_available', $this->settings->wfhAvailableFor($employee));
+        $employee->makeHidden(['wfh_enabled_override', 'wfh_approval_required_override']);
+
+        return $employee;
     }
 }

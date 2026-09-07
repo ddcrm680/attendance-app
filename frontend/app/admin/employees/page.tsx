@@ -29,6 +29,16 @@ const blankForm = {
   status: "active" as Employee["status"],
 };
 
+type WfhOverrideValue = "inherit" | "true" | "false";
+
+function overrideValue(value: WfhOverrideValue): boolean | null {
+  return value === "inherit" ? null : value === "true";
+}
+
+function overrideSelection(value: boolean | null | undefined): WfhOverrideValue {
+  return value === null || value === undefined ? "inherit" : String(value) as WfhOverrideValue;
+}
+
 export default function AdminEmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +51,8 @@ export default function AdminEmployeesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [currentUser, setCurrentUser] = useState<Employee | null>(null);
   const [wfhEligible, setWfhEligible] = useState(false);
+  const [wfhEnabledOverride, setWfhEnabledOverride] = useState<WfhOverrideValue>("inherit");
+  const [wfhApprovalOverride, setWfhApprovalOverride] = useState<WfhOverrideValue>("inherit");
 
   function load() {
     setLoading(true);
@@ -89,6 +101,8 @@ export default function AdminEmployeesPage() {
       status: employee.status,
     });
     setWfhEligible(Boolean(employee.wfh_eligible));
+    setWfhEnabledOverride(overrideSelection(employee.wfh_enabled_override));
+    setWfhApprovalOverride(overrideSelection(employee.wfh_approval_required_override));
     setFormError(null);
   }
 
@@ -96,6 +110,8 @@ export default function AdminEmployeesPage() {
     setEditing(null);
     setForm(blankForm);
     setWfhEligible(false);
+    setWfhEnabledOverride("inherit");
+    setWfhApprovalOverride("inherit");
     setFormError(null);
   }
 
@@ -127,6 +143,8 @@ export default function AdminEmployeesPage() {
         await updateEmployee(editing.id, {
           ...common,
           ...(form.password ? { password: form.password } : {}),
+          wfh_enabled_override: overrideValue(wfhEnabledOverride),
+          wfh_approval_required_override: overrideValue(wfhApprovalOverride),
         });
         await updateWfhEligibility(editing.id, wfhEligible);
       } else
@@ -359,14 +377,43 @@ export default function AdminEmployeesPage() {
             <option value="suspended">Suspended</option>
           </select>
           {editing && (
-            <label className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm">
-              <input
-                type="checkbox"
-                checked={wfhEligible}
-                onChange={(e) => setWfhEligible(e.target.checked)}
-              />{" "}
-              WFH eligible
-            </label>
+            <fieldset className="rounded-lg border border-gray-300 p-3 text-sm md:col-span-2">
+              <legend className="px-1 font-medium">WFH policy</legend>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={wfhEligible}
+                  onChange={(e) => setWfhEligible(e.target.checked)}
+                />
+                WFH eligible
+              </label>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="grid gap-1">
+                  <span>WFH availability</span>
+                  <select
+                    className="rounded-lg border border-gray-300 px-3 py-2"
+                    value={wfhEnabledOverride}
+                    onChange={(event) => setWfhEnabledOverride(event.target.value as WfhOverrideValue)}
+                  >
+                    <option value="inherit">Use office policy</option>
+                    <option value="true">Allowed</option>
+                    <option value="false">Not allowed</option>
+                  </select>
+                </label>
+                <label className="grid gap-1">
+                  <span>WFH approval</span>
+                  <select
+                    className="rounded-lg border border-gray-300 px-3 py-2"
+                    value={wfhApprovalOverride}
+                    onChange={(event) => setWfhApprovalOverride(event.target.value as WfhOverrideValue)}
+                  >
+                    <option value="inherit">Use office policy</option>
+                    <option value="true">Required</option>
+                    <option value="false">Not required</option>
+                  </select>
+                </label>
+              </div>
+            </fieldset>
           )}
           {!editing && (
             <input

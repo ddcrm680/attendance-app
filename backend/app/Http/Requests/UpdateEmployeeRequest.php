@@ -34,6 +34,8 @@ class UpdateEmployeeRequest extends FormRequest
             'office_id' => ['nullable', Rule::exists('offices', 'id')->where('status', 'active')],
             'status' => ['sometimes', 'in:active,inactive,suspended'],
             'password' => ['sometimes', 'string', 'min:8'],
+            'wfh_enabled_override' => ['nullable', 'boolean'],
+            'wfh_approval_required_override' => ['nullable', 'boolean'],
         ];
     }
 }

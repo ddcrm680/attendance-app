@@ -45,13 +45,10 @@ class AttendanceController extends Controller
         $mode = $data['mode'];
         $this->calendar->assertAttendanceAllowed($employee, now());
 
-        $setting = $this->settings->forOffice($office);
-        if ($mode === 'wfh') {
-            $this->wfh->assertAllowed($employee, now());
-        }
+        $wfhPolicy = $mode === 'wfh' ? $this->wfh->assertAllowed($employee, now()) : null;
 
-        $requiresGps = $mode === 'office' || $setting?->wfh_gps_required;
-        $requiresPhoto = $mode === 'office' || $setting?->wfh_photo_required;
+        $requiresGps = $mode === 'office' || $wfhPolicy?->gpsRequired;
+        $requiresPhoto = $mode === 'office' || $wfhPolicy?->photoRequired;
 
         if ($requiresPhoto && ! $request->hasFile('photo')) {
             throw ValidationException::withMessages([
@@ -109,9 +106,9 @@ class AttendanceController extends Controller
         }
 
         $data = $request->validated();
-        $setting = $this->settings->forOffice($open->office);
-        $requiresGps = $open->mode === 'office' || $setting?->wfh_gps_required;
-        $requiresPhoto = $open->mode === 'office' || $setting?->wfh_photo_required;
+        $wfhPolicy = $open->mode === 'wfh' ? $this->settings->wfhFor($employee) : null;
+        $requiresGps = $open->mode === 'office' || $wfhPolicy?->gpsRequired;
+        $requiresPhoto = $open->mode === 'office' || $wfhPolicy?->photoRequired;
 
         if ($requiresPhoto && ! $request->hasFile('photo')) {
             throw ValidationException::withMessages([

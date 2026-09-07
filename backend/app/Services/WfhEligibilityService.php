@@ -9,18 +9,20 @@ use Illuminate\Validation\ValidationException;
 
 class WfhEligibilityService
 {
-    public function assertAllowed(Employee $employee, Carbon $date): void
-    {
-        $settings = (new AttendanceSettingsResolver)->forOffice($employee->office);
+    public function __construct(private AttendanceSettingsResolver $settings) {}
 
-        if (! $employee->wfh_eligible || ! $settings?->wfh_enabled) {
+    public function assertAllowed(Employee $employee, Carbon $date): WfhPolicy
+    {
+        $policy = $this->settings->wfhFor($employee);
+
+        if (! $employee->wfh_eligible || ! $policy->enabled) {
             throw ValidationException::withMessages([
                 'mode' => ['Work from home is not available for your account.'],
             ]);
         }
 
-        if (! $settings->wfh_approval_required) {
-            return;
+        if (! $policy->approvalRequired) {
+            return $policy;
         }
 
         $hasApproval = WfhRequest::where('employee_id', $employee->id)
@@ -33,5 +35,7 @@ class WfhEligibilityService
                 'mode' => ['An approved work-from-home request is required.'],
             ]);
         }
+
+        return $policy;
     }
 }

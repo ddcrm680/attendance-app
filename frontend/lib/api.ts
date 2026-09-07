@@ -60,6 +60,9 @@ export type Employee = {
   } | null;
   status: "active" | "inactive" | "suspended";
   wfh_eligible?: boolean;
+  wfh_available?: boolean;
+  wfh_enabled_override?: boolean | null;
+  wfh_approval_required_override?: boolean | null;
 };
 
 export type Department = {
@@ -574,6 +577,8 @@ export function updateEmployee(
     office_id?: number | null;
     designation?: string | null;
     status?: Employee["status"];
+    wfh_enabled_override?: boolean | null;
+    wfh_approval_required_override?: boolean | null;
   },
 ) {
   return apiFetch<Employee>(`/admin/employees/${id}`, {

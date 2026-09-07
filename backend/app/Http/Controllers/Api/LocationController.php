@@ -34,7 +34,7 @@ class LocationController extends Controller
                 'message' => 'No active check-in session. Location tracking only runs between check-in and check-out.',
             ], 409);
         }
-        if ($attendance->mode === 'wfh' && ! $this->settings->forOffice($attendance->office)?->wfh_tracking_enabled) {
+        if ($attendance->mode === 'wfh' && ! $this->settings->wfhFor($employee)->trackingEnabled) {
             return response()->json([
                 'message' => 'Live tracking is disabled for this work-from-home session.',
             ], 403);
@@ -111,7 +111,7 @@ class LocationController extends Controller
             ->first();
         $active = $attendance
             && ! ($attendance->mode === 'wfh'
-                && ! $this->settings->forOffice($attendance->office)?->wfh_tracking_enabled);
+                && ! $this->settings->wfhFor($request->user())->trackingEnabled);
 
         return response()->json([
             'active' => (bool) $active,

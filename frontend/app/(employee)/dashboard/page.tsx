@@ -165,7 +165,7 @@ export default function DashboardPage() {
         </p>
       </section>
 
-      {!hasCheckedIn && currentUser?.wfh_eligible && (
+      {!hasCheckedIn && currentUser?.wfh_available && (
         <section className="attendance-panel p-4 sm:p-5">
           <h2 className="text-sm font-semibold text-gray-900">Attendance mode</h2>
           <div className="mt-3 grid grid-cols-2 gap-2.5 sm:gap-3">

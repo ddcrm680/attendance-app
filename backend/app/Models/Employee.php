@@ -27,6 +27,8 @@ class Employee extends Authenticatable
         'joining_date',
         'status',
         'wfh_eligible',
+        'wfh_enabled_override',
+        'wfh_approval_required_override',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -37,6 +39,8 @@ class Employee extends Authenticatable
             'password' => 'hashed',
             'joining_date' => 'date',
             'wfh_eligible' => 'boolean',
+            'wfh_enabled_override' => 'boolean',
+            'wfh_approval_required_override' => 'boolean',
         ];
     }
 
