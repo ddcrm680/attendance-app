@@ -154,21 +154,21 @@ export default function DashboardPage() {
   const hasCheckedOut = !!attendance?.check_out;
 
   return (
-    <div className="space-y-5">
-      <section className="attendance-panel px-5 py-6 sm:px-6">
-        <p className="text-sm font-medium text-blue-600">Daily attendance</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">
+    <div className="attendance-page space-y-3">
+      <section className="attendance-panel attendance-header px-4 py-4 sm:px-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">Daily attendance</p>
+        <h1 className="mt-1 text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
           Attendance
         </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Record your daily attendance with location and photo verification.
-        </p>
       </section>
 
       {!hasCheckedIn && currentUser?.wfh_available && (
-        <section className="attendance-panel p-4 sm:p-5">
-          <h2 className="text-sm font-semibold text-gray-900">Attendance mode</h2>
-          <div className="mt-3 grid grid-cols-2 gap-2.5 sm:gap-3">
+        <section className="attendance-panel attendance-mode-panel p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-gray-900">Attendance mode</h2>
+            <span className="text-[11px] font-medium text-gray-500">Select one</span>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:gap-2.5">
             <button
               type="button"
               onClick={() => setMode("office")}
@@ -232,14 +232,14 @@ export default function DashboardPage() {
         </p>
       )}
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="attendance-actions grid gap-2.5 sm:grid-cols-2">
         <button
           onClick={() => {
             setMessage(null);
             setSelfieAction("check-in");
           }}
           disabled={busy || hasCheckedIn || !online}
-          className="attendance-action attendance-action-primary attendance-punch-primary w-full rounded-2xl py-4 text-base font-semibold text-white disabled:opacity-40"
+          className="attendance-action attendance-action-primary attendance-punch-primary w-full rounded-xl py-3 text-base font-semibold text-white disabled:opacity-40"
         >
           <span aria-hidden="true">➤</span> Check in
         </button>
@@ -250,7 +250,7 @@ export default function DashboardPage() {
             setSelfieAction("check-out");
           }}
           disabled={busy || !hasCheckedIn || hasCheckedOut || !online}
-          className="attendance-action attendance-action-secondary attendance-punch-secondary w-full rounded-2xl py-4 text-base font-semibold text-gray-900 disabled:opacity-40"
+          className="attendance-action attendance-action-secondary attendance-punch-secondary w-full rounded-xl py-3 text-base font-semibold text-gray-900 disabled:opacity-40"
         >
           <span aria-hidden="true">□</span> Check out
         </button>
@@ -269,11 +269,11 @@ export default function DashboardPage() {
         />
       )}
 
-      <section className="attendance-panel p-4 sm:p-5">
+      <section className="attendance-panel attendance-today p-3 sm:p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-blue-600">Today</p>
-            <h2 className="mt-1 text-lg font-semibold text-gray-900">Today&apos;s attendance</h2>
+            <h2 className="mt-1 text-base font-semibold text-gray-900 sm:text-lg">Today&apos;s attendance</h2>
           </div>
           {attendance && (
             <span className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
@@ -282,7 +282,7 @@ export default function DashboardPage() {
           )}
         </div>
         {attendance ? (
-          <div className="attendance-summary-grid mt-4">
+          <div className="attendance-summary-grid mt-3">
             <div>
               <p>Check-in</p>
               <strong>{formatTime(attendance.check_in)}</strong>
@@ -297,7 +297,7 @@ export default function DashboardPage() {
             </div>
           </div>
         ) : (
-          <div className="attendance-empty-state mt-4">
+          <div className="attendance-empty-state mt-3">
               <span aria-hidden="true">✓</span>
               <div>
                 <p className="font-semibold text-gray-900">Not yet checked in</p>
