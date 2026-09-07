@@ -11,18 +11,9 @@ import {
   type Attendance,
   type Employee,
 } from "@/lib/api";
-import LocationStatus from "@/components/LocationStatus";
 import SelfieCapture from "@/components/SelfieCapture";
 import { useLiveLocationTracking } from "@/hooks/useLiveLocationTracking";
-import { formatDuration, formatMode, formatStatus } from "@/lib/presentation";
-
-type GeoState = {
-  status: "idle" | "detecting" | "verified" | "outside" | "error";
-  latitude?: number;
-  longitude?: number;
-  accuracy?: number;
-  errorMessage?: string;
-};
+import { formatMode, formatStatus } from "@/lib/presentation";
 
 function formatTime(iso: string | null) {
   if (!iso) return "—";
@@ -34,7 +25,6 @@ function formatTime(iso: string | null) {
 
 export default function DashboardPage() {
   const [attendance, setAttendance] = useState<Attendance | null>(null);
-  const [geo, setGeo] = useState<GeoState>({ status: "idle" });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [selfieAction, setSelfieAction] = useState<
@@ -93,7 +83,6 @@ export default function DashboardPage() {
   });
 
   function getPosition(): Promise<GeolocationPosition> {
-    setGeo({ status: "detecting" });
     return new Promise((resolve, reject) => {
       if (!("geolocation" in navigator)) {
         reject(new Error("Geolocation is not supported on this device."));
@@ -129,8 +118,6 @@ export default function DashboardPage() {
     try {
       const pos = await getPosition();
       const { latitude, longitude, accuracy } = pos.coords;
-      setGeo({ status: "verified", latitude, longitude, accuracy });
-
       const res =
         action === "check-in"
           ? await checkIn({
@@ -156,11 +143,6 @@ export default function DashboardPage() {
         err instanceof Error
           ? err.message
           : "Unable to verify your location. Please enable GPS and try again.";
-      setGeo((prev) => ({
-        ...prev,
-        status: msg.includes("outside") ? "outside" : "error",
-        errorMessage: msg,
-      }));
       setMessage(msg);
       throw new Error(msg);
     } finally {
@@ -172,38 +154,53 @@ export default function DashboardPage() {
   const hasCheckedOut = !!attendance?.check_out;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      <section className="attendance-panel px-5 py-6 sm:px-6">
+        <p className="text-sm font-medium text-blue-600">Daily attendance</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">
+          Attendance
+        </h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Record your daily attendance with location and photo verification.
+        </p>
+      </section>
+
       {!hasCheckedIn && currentUser?.wfh_eligible && (
-        <>
-          <label className="block text-sm text-gray-700">
-            Attendance mode
-            <select
-              value={mode}
-              onChange={(event) =>
-                setMode(event.target.value as "office" | "wfh")
-              }
-              className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-3"
+        <section className="attendance-panel p-4 sm:p-5">
+          <h2 className="text-sm font-semibold text-gray-900">Attendance mode</h2>
+          <div className="mt-3 grid grid-cols-2 gap-2.5 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setMode("office")}
+              aria-pressed={mode === "office"}
+              className={`attendance-mode-option ${mode === "office" ? "attendance-mode-option-active" : ""}`}
             >
-              <option value="office">Office</option>
-              <option value="wfh">Work from home</option>
-            </select>
-          </label>
+              <span className="attendance-mode-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M4 20h16M6 20V6.5A1.5 1.5 0 0 1 7.5 5h9A1.5 1.5 0 0 1 18 6.5V20M9 9h1m4 0h1M9 13h1m4 0h1" />
+                </svg>
+              </span>
+              <span className="block text-sm font-semibold text-gray-900">Office</span>
+              {mode === "office" && <span className="attendance-selected-mark">✓</span>}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("wfh")}
+              aria-pressed={mode === "wfh"}
+              className={`attendance-mode-option ${mode === "wfh" ? "attendance-mode-option-active" : ""}`}
+            >
+              <span className="attendance-mode-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="m3 11 9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9Z" />
+                </svg>
+              </span>
+              <span className="block text-sm font-semibold text-gray-900">Work from home</span>
+              {mode === "wfh" && <span className="attendance-selected-mark">✓</span>}
+            </button>
+          </div>
 
-          <p className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-            {mode === "office"
-              ? "Office attendance — location verification is required."
-              : "Work from home selected. Your configured GPS, selfie, and tracking requirements still apply."}
-          </p>
-        </>
+        </section>
       )}
-
-      <LocationStatus
-        status={geo.status}
-        latitude={geo.latitude}
-        longitude={geo.longitude}
-        accuracy={geo.accuracy}
-        errorMessage={geo.errorMessage}
-      />
 
       {attendance?.check_in && !attendance.check_out && (
         <div
@@ -235,30 +232,32 @@ export default function DashboardPage() {
         </p>
       )}
 
-      <button
-        onClick={() => {
-          setMessage(null);
-          setSelfieAction("check-in");
-        }}
-        disabled={busy || hasCheckedIn || !online}
-        className="attendance-action attendance-action-primary w-full rounded-xl bg-gray-900 py-4 text-base font-medium text-white disabled:opacity-40"
-      >
-        Check in
-      </button>
+      <div className="grid gap-3 lg:grid-cols-2">
+        <button
+          onClick={() => {
+            setMessage(null);
+            setSelfieAction("check-in");
+          }}
+          disabled={busy || hasCheckedIn || !online}
+          className="attendance-action attendance-action-primary attendance-punch-primary w-full rounded-2xl py-4 text-base font-semibold text-white disabled:opacity-40"
+        >
+          <span aria-hidden="true">➤</span> Check in
+        </button>
 
-      <button
-        onClick={() => {
-          setMessage(null);
-          setSelfieAction("check-out");
-        }}
-        disabled={busy || !hasCheckedIn || hasCheckedOut || !online}
-        className="attendance-action attendance-action-secondary w-full rounded-xl border border-gray-300 bg-white py-4 text-base font-medium text-gray-900 disabled:opacity-40"
-      >
-        Check out
-      </button>
+        <button
+          onClick={() => {
+            setMessage(null);
+            setSelfieAction("check-out");
+          }}
+          disabled={busy || !hasCheckedIn || hasCheckedOut || !online}
+          className="attendance-action attendance-action-secondary attendance-punch-secondary w-full rounded-2xl py-4 text-base font-semibold text-gray-900 disabled:opacity-40"
+        >
+          <span aria-hidden="true">□</span> Check out
+        </button>
+      </div>
 
       {message && (
-        <p className="text-center text-sm text-gray-600">{message}</p>
+        <p className="attendance-feedback" role="status">{message}</p>
       )}
 
       {selfieAction && (
@@ -270,22 +269,43 @@ export default function DashboardPage() {
         />
       )}
 
-      {attendance && (
-        <div className="rounded-xl bg-green-50 p-4">
-          <p className="mb-2 text-sm font-medium text-green-800">
-            Today&apos;s attendance
-          </p>
-          <div className="space-y-1 text-sm text-gray-700">
-            <p>Check-in: {formatTime(attendance.check_in)}</p>
-            <p>Check-out: {formatTime(attendance.check_out)}</p>
-            {attendance.working_minutes > 0 && (
-              <p>Working hours: {formatDuration(attendance.working_minutes)}</p>
-            )}
-            <p>Status: {formatStatus(attendance.status)}</p>
-            <p>Mode: {formatMode(attendance.mode)}</p>
+      <section className="attendance-panel p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-blue-600">Today</p>
+            <h2 className="mt-1 text-lg font-semibold text-gray-900">Today&apos;s attendance</h2>
           </div>
+          {attendance && (
+            <span className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">
+              {formatMode(attendance.mode)}
+            </span>
+          )}
         </div>
-      )}
+        {attendance ? (
+          <div className="attendance-summary-grid mt-4">
+            <div>
+              <p>Check-in</p>
+              <strong>{formatTime(attendance.check_in)}</strong>
+            </div>
+            <div>
+              <p>Check-out</p>
+              <strong>{formatTime(attendance.check_out)}</strong>
+            </div>
+            <div>
+              <p>Status</p>
+              <strong>{formatStatus(attendance.status)}</strong>
+            </div>
+          </div>
+        ) : (
+          <div className="attendance-empty-state mt-4">
+              <span aria-hidden="true">✓</span>
+              <div>
+                <p className="font-semibold text-gray-900">Not yet checked in</p>
+                <p className="mt-1 text-sm text-gray-600">Have a productive day!</p>
+              </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
