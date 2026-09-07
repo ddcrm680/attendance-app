@@ -19,13 +19,16 @@ class WfhEligibilityService
             ]);
         }
 
-        $approvalRequired = $settings->wfh_approval_required;
+        if (! $settings->wfh_approval_required) {
+            return;
+        }
+
         $hasApproval = WfhRequest::where('employee_id', $employee->id)
             ->whereDate('attendance_date', $date->toDateString())
             ->where('status', 'approved')
             ->exists();
 
-        if ($approvalRequired && ! $hasApproval) {
+        if (! $hasApproval) {
             throw ValidationException::withMessages([
                 'mode' => ['An approved work-from-home request is required.'],
             ]);
