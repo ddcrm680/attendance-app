@@ -67,7 +67,9 @@ class AttendanceController extends Controller
             ]);
         }
 
-        $location = $requiresGps ? $this->locations->verify($office, $data) : null;
+        $location = $requiresGps
+            ? ($mode === 'wfh' ? $this->locations->verifyGps($office, $data) : $this->locations->verify($office, $data))
+            : null;
         $photoPath = $request->hasFile('photo')
             ? $this->photos->store($request->file('photo'), $employee, 'check_in')
             : null;
@@ -123,7 +125,9 @@ class AttendanceController extends Controller
             ]);
         }
 
-        $location = $requiresGps ? $this->locations->verify($open->office, $data) : null;
+        $location = $requiresGps
+            ? ($open->mode === 'wfh' ? $this->locations->verifyGps($open->office, $data) : $this->locations->verify($open->office, $data))
+            : null;
         $photoPath = $request->hasFile('photo')
             ? $this->photos->store($request->file('photo'), $employee, 'check_out')
             : null;

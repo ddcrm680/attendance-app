@@ -13,7 +13,7 @@ class VerifiedLocationService
         private AttendanceSettingsResolver $settings,
     ) {}
 
-    /** @return array{latitude: float, longitude: float, accuracy: float, distance_meters: float} */
+    /** @return array{latitude: float, longitude: float, accuracy: float, distance_meters: float|null} */
     public function verify(Office $office, array $location): array
     {
         if ($office->status !== 'active' || ! $this->isValidOffice($office)) {
@@ -21,6 +21,21 @@ class VerifiedLocationService
                 'office' => ['Your assigned office cannot be used for attendance. Contact HR.'],
             ]);
         }
+
+        $verifiedLocation = $this->verifyGps($office, $location);
+        $result = $this->geofence->isWithinOffice($office, $verifiedLocation['latitude'], $verifiedLocation['longitude']);
+        if (! $result['inside']) {
+            throw ValidationException::withMessages([
+                'location' => ['You are outside the allowed location.'],
+            ]);
+        }
+
+        return array_merge($verifiedLocation, ['distance_meters' => $result['distance_meters']]);
+    }
+
+    /** @return array{latitude: float, longitude: float, accuracy: float, distance_meters: null} */
+    public function verifyGps(Office $office, array $location): array
+    {
         $this->assertFreshPosition($location['position_timestamp'] ?? null);
         $settings = $this->settings->forOffice($office);
         $accuracy = (float) $location['accuracy'];
@@ -29,18 +44,12 @@ class VerifiedLocationService
                 'accuracy' => ['GPS accuracy is too low. Move to an open area and try again.'],
             ]);
         }
-        $result = $this->geofence->isWithinOffice($office, (float) $location['latitude'], (float) $location['longitude']);
-        if (! $result['inside']) {
-            throw ValidationException::withMessages([
-                'location' => ['You are outside the allowed location.'],
-            ]);
-        }
 
         return [
             'latitude' => (float) $location['latitude'],
             'longitude' => (float) $location['longitude'],
             'accuracy' => $accuracy,
-            'distance_meters' => $result['distance_meters'],
+            'distance_meters' => null,
         ];
     }
 

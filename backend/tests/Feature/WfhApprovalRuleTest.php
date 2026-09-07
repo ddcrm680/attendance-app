@@ -114,6 +114,69 @@ class WfhApprovalRuleTest extends TestCase
             ->assertJsonValidationErrors('location');
     }
 
+    public function test_wfh_with_required_gps_accepts_a_current_location_outside_the_office_geofence(): void
+    {
+        [$employee] = $this->employee(['wfh_gps_required' => true]);
+
+        Sanctum::actingAs($employee);
+
+        $this->postJson('/api/attendance/check-in', [
+            'mode' => 'wfh',
+            'latitude' => 19.0760,
+            'longitude' => 72.8777,
+            'accuracy' => 10,
+            'position_timestamp' => now()->valueOf(),
+        ])->assertCreated();
+
+        $attendance = Attendance::firstOrFail();
+        $this->assertSame('wfh', $attendance->mode);
+        $this->assertSame(19.076, (float) $attendance->check_in_latitude);
+        $this->assertNull($attendance->check_in_distance_meters);
+        $this->assertDatabaseHas('location_logs', [
+            'employee_id' => $employee->id,
+            'attendance_id' => $attendance->id,
+            'latitude' => 19.076,
+            'longitude' => 72.8777,
+            'accuracy' => 10,
+        ]);
+    }
+
+    public function test_wfh_with_required_gps_rejects_poor_accuracy(): void
+    {
+        [$employee] = $this->employee([
+            'wfh_gps_required' => true,
+            'gps_accuracy_threshold_meters' => 20,
+        ]);
+
+        Sanctum::actingAs($employee);
+
+        $this->postJson('/api/attendance/check-in', [
+            'mode' => 'wfh',
+            'latitude' => 19.0760,
+            'longitude' => 72.8777,
+            'accuracy' => 21,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('accuracy');
+    }
+
+    public function test_wfh_with_required_gps_rejects_a_stale_location(): void
+    {
+        [$employee] = $this->employee(['wfh_gps_required' => true]);
+
+        Sanctum::actingAs($employee);
+
+        $this->postJson('/api/attendance/check-in', [
+            'mode' => 'wfh',
+            'latitude' => 19.0760,
+            'longitude' => 72.8777,
+            'accuracy' => 10,
+            'position_timestamp' => now()->subSeconds(config('attendance.max_position_age_seconds') + 1)->valueOf(),
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('position_timestamp');
+    }
+
     /** @return array{Employee, Office} */
     private function employee(array $settings = [], bool $wfhEligible = true): array
     {
