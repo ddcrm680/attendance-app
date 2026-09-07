@@ -2,7 +2,7 @@
 # Railway auto-detects nixpacks.toml — no dashboard build-command setup needed.
 
 [phases.setup]
-nixPkgs = ["php83", "php83Packages.composer"]
+nixPkgs = ["php83", "php83Extensions.gd", "php83Packages.composer"]
 
 [phases.install]
 cmds = ["composer install --no-dev --optimize-autoloader"]
