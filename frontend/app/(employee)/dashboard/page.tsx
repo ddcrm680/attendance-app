@@ -156,10 +156,12 @@ export default function DashboardPage() {
   return (
     <div className="attendance-page space-y-3">
       <section className="attendance-panel attendance-header px-4 py-4 sm:px-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">Daily attendance</p>
-        <h1 className="mt-1 text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
-          Attendance
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+          Daily attendance
         </h1>
+        <p className="mt-1 text-sm text-gray-600">
+          Check in and check out for today.
+        </p>
       </section>
 
       {!hasCheckedIn && currentUser?.wfh_available && (
