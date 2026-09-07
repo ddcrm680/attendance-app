@@ -173,6 +173,30 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4">
+      {!hasCheckedIn && currentUser?.wfh_eligible && (
+        <>
+          <label className="block text-sm text-gray-700">
+            Attendance mode
+            <select
+              value={mode}
+              onChange={(event) =>
+                setMode(event.target.value as "office" | "wfh")
+              }
+              className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-3"
+            >
+              <option value="office">Office</option>
+              <option value="wfh">Work from home</option>
+            </select>
+          </label>
+
+          <p className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+            {mode === "office"
+              ? "Office attendance — location verification is required."
+              : "Work from home selected. Your configured GPS, selfie, and tracking requirements still apply."}
+          </p>
+        </>
+      )}
+
       <LocationStatus
         status={geo.status}
         latitude={geo.latitude}
@@ -221,22 +245,6 @@ export default function DashboardPage() {
       >
         Check in
       </button>
-
-      {!hasCheckedIn && currentUser?.wfh_eligible && (
-        <label className="block text-sm text-gray-700">
-          Attendance mode
-          <select
-            value={mode}
-            onChange={(event) =>
-              setMode(event.target.value as "office" | "wfh")
-            }
-            className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-3"
-          >
-            <option value="office">Office</option>
-            <option value="wfh">Work from home</option>
-          </select>
-        </label>
-      )}
 
       <button
         onClick={() => {
