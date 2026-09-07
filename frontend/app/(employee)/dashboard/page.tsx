@@ -233,9 +233,7 @@ export default function DashboardPage() {
             className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-3"
           >
             <option value="office">Office</option>
-            <option value="wfh">
-              Work from home (approval required where configured)
-            </option>
+            <option value="wfh">Work from home</option>
           </select>
         </label>
       )}
