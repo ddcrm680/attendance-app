@@ -33,6 +33,9 @@ class StoreEmployeeRequest extends FormRequest
             'office_id' => ['nullable', Rule::exists('offices', 'id')->where('status', 'active')],
             'joining_date' => ['nullable', 'date'],
             'status' => ['sometimes', 'in:active,inactive,suspended'],
+            'wfh_eligible' => ['sometimes', 'boolean'],
+            'wfh_enabled_override' => ['nullable', 'boolean'],
+            'wfh_approval_required_override' => ['nullable', 'boolean'],
         ];
     }
 }

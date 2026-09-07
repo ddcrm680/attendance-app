@@ -158,6 +158,9 @@ export default function AdminEmployeesPage() {
             : undefined,
           office_id: form.office_id ? Number(form.office_id) : undefined,
           designation: form.designation || undefined,
+          wfh_eligible: wfhEligible,
+          wfh_enabled_override: overrideValue(wfhEnabledOverride),
+          wfh_approval_required_override: overrideValue(wfhApprovalOverride),
         });
       cancelEdit();
       load();
@@ -376,8 +379,7 @@ export default function AdminEmployeesPage() {
             <option value="inactive">Inactive</option>
             <option value="suspended">Suspended</option>
           </select>
-          {editing && (
-            <fieldset className="rounded-lg border border-gray-300 p-3 text-sm md:col-span-2">
+          <fieldset className="rounded-lg border border-gray-300 p-3 text-sm md:col-span-2">
               <legend className="px-1 font-medium">WFH policy</legend>
               <label className="flex items-center gap-2">
                 <input
@@ -413,8 +415,7 @@ export default function AdminEmployeesPage() {
                   </select>
                 </label>
               </div>
-            </fieldset>
-          )}
+          </fieldset>
           {!editing && (
             <input
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm"

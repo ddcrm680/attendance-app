@@ -558,6 +558,9 @@ export function createEmployee(payload: {
   designation?: string;
   joining_date?: string;
   status?: Employee["status"];
+  wfh_eligible?: boolean;
+  wfh_enabled_override?: boolean | null;
+  wfh_approval_required_override?: boolean | null;
 }) {
   return apiFetch<Employee>("/admin/employees", {
     method: "POST",

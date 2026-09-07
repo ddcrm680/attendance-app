@@ -51,6 +51,9 @@ class EmployeeController extends Controller
         $this->authorize('create', Employee::class);
 
         $data = $request->validated();
+        $data['wfh_eligible'] ??= false;
+        $data['wfh_enabled_override'] ??= null;
+        $data['wfh_approval_required_override'] ??= null;
         $data['password'] = Hash::make($data['password']);
 
         $employee = Employee::create($data);

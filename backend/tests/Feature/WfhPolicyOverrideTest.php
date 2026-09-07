@@ -160,6 +160,66 @@ class WfhPolicyOverrideTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_create_an_employee_with_default_wfh_policy_inheritance(): void
+    {
+        [$admin] = $this->employee([], [], true, 'super_admin');
+        [, $office] = $this->employee();
+
+        Sanctum::actingAs($admin);
+        $created = $this->postJson('/api/admin/employees', $this->employeePayload($office))
+            ->assertCreated()
+            ->assertJsonPath('wfh_eligible', false)
+            ->assertJsonPath('wfh_enabled_override', null)
+            ->assertJsonPath('wfh_approval_required_override', null)
+            ->json();
+
+        $this->assertDatabaseHas('employees', [
+            'id' => $created['id'],
+            'office_id' => $office->id,
+            'wfh_eligible' => false,
+            'wfh_enabled_override' => null,
+            'wfh_approval_required_override' => null,
+        ]);
+    }
+
+    public function test_admin_can_create_an_employee_with_wfh_eligibility_and_overrides(): void
+    {
+        [$admin] = $this->employee([], [], true, 'super_admin');
+        [, $office] = $this->employee();
+
+        Sanctum::actingAs($admin);
+        $created = $this->postJson('/api/admin/employees', $this->employeePayload($office, [
+            'wfh_eligible' => true,
+            'wfh_enabled_override' => true,
+            'wfh_approval_required_override' => false,
+        ]))
+            ->assertCreated()
+            ->assertJsonPath('wfh_eligible', true)
+            ->assertJsonPath('wfh_enabled_override', true)
+            ->assertJsonPath('wfh_approval_required_override', false)
+            ->json();
+
+        $this->assertDatabaseHas('employees', [
+            'id' => $created['id'],
+            'wfh_eligible' => true,
+            'wfh_enabled_override' => true,
+            'wfh_approval_required_override' => false,
+        ]);
+    }
+
+    private function employeePayload(Office $office, array $extra = []): array
+    {
+        return array_merge([
+            'employee_code' => 'NEW-'.uniqid(),
+            'name' => 'New Employee',
+            'email' => uniqid().'@example.test',
+            'mobile' => '9'.str_pad((string) random_int(1, 999999999), 9, '0', STR_PAD_LEFT),
+            'password' => 'password123',
+            'role' => 'employee',
+            'office_id' => $office->id,
+        ], $extra);
+    }
+
     /** @return array{Employee, Office} */
     private function employee(array $settings = [], array $overrides = [], bool $eligible = true, string $role = 'employee'): array
     {
