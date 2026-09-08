@@ -29,6 +29,19 @@ class AttendanceFoundationTest extends TestCase
             ->assertJsonStructure(['token']);
     }
 
+    public function test_active_employee_can_log_in_with_mobile_number(): void
+    {
+        $employee = $this->employee();
+
+        $this->postJson('/api/login', [
+            'identifier' => $employee->mobile,
+            'password' => 'test-password',
+        ])
+            ->assertOk()
+            ->assertJsonPath('employee.id', $employee->id)
+            ->assertJsonStructure(['token']);
+    }
+
     public function test_daily_attendance_is_unique_per_employee(): void
     {
         $employee = $this->employee();
