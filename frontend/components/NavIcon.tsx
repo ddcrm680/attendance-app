@@ -12,7 +12,8 @@ type IconName =
   | "live"
   | "whatsapp"
   | "audit"
-  | "logout";
+  | "logout"
+  | "back";
 const paths: Record<IconName, string> = {
   home: "M3 10.5 12 3l9 7.5v9a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z",
   attendance:
@@ -31,6 +32,7 @@ const paths: Record<IconName, string> = {
   whatsapp: "M20 11.5a8 8 0 0 1-12.7 6.5L4 19l1-3.3A8 8 0 1 1 20 11.5Z",
   audit: "M5 4h14v16H5zM8 8h8M8 12h8M8 16h5",
   logout: "M10 17l5-5-5-5m5 5H3m11-8V3h6v18h-6v-4",
+  back: "M19 12H5m6 6-6-6 6-6",
 };
 export default function NavIcon({ name }: { name: IconName }) {
   return (

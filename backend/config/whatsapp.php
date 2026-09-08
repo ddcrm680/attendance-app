@@ -1,9 +1,11 @@
 <?php
 
 return [
+    // Keep WhatsApp disabled locally. Template approval and webhook handling are later phases.
     'enabled' => (bool) env('WHATSAPP_ENABLED', false),
     'provider' => env('WHATSAPP_PROVIDER', 'cloud'),
-    'base_url' => rtrim((string) env('WHATSAPP_API_BASE_URL', 'https://graph.facebook.com/v20.0'), '/'),
+    'base_url' => rtrim((string) env('WHATSAPP_API_BASE_URL', 'https://graph.facebook.com'), '/'),
+    'graph_api_version' => trim((string) env('WHATSAPP_GRAPH_API_VERSION', 'v25.0'), '/'),
     'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
     'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
     'attendance_recipient' => env('WHATSAPP_ATTENDANCE_RECIPIENT'),

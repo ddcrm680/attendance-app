@@ -30,6 +30,8 @@ Set NEXT_PUBLIC_API_URL=https://<backend-service>.up.railway.app/api in the fron
 
 When WhatsApp delivery is enabled, configure the queue and run a worker with php artisan queue:work. Run php artisan schedule:run every minute through Railway scheduling/infrastructure. The scheduler includes the daily WhatsApp summary and opt-in privacy cleanup.
 
+The Phase A WhatsApp foundation keeps delivery disabled by default, takes the Meta Graph API version from `WHATSAPP_GRAPH_API_VERSION` (default `v25.0`), and supports provider-side template payload construction for a later phase. A `sent` log means that Meta accepted the API request; delivery/read reconciliation requires the deferred webhook phase. Real Meta credentials and approved template names are intentionally not stored in this repository.
+
 ## Storage and verification
 
 Attendance photos use private Laravel storage and must not be published as unrestricted URLs. Ensure the backend storage is writable and persistent according to the deployment’s storage policy.

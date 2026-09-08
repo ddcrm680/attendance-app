@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 type Props = {
   allowed?: Employee["role"][];
   fallback: string;
-  children: React.ReactNode;
+  children: React.ReactNode | ((user: Employee) => React.ReactNode);
 };
 
 /** Client route hygiene only; every API still enforces Sanctum/RBAC. */
@@ -39,5 +39,5 @@ export default function RoleGate({ allowed, fallback, children }: Props) {
         Loading account…
       </main>
     );
-  return <>{children}</>;
+  return <>{typeof children === "function" ? children(user) : children}</>;
 }

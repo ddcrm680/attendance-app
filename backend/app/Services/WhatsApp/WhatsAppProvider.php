@@ -5,5 +5,10 @@ namespace App\Services\WhatsApp;
 interface WhatsAppProvider
 {
     /** @return array{message_id:?string} */
-    public function send(string $recipient, string $body, ?string $privatePhotoPath = null): array;
+    public function send(
+        string $recipient,
+        string $body,
+        ?string $privatePhotoPath = null,
+        ?WhatsAppTemplate $template = null,
+    ): array;
 }
