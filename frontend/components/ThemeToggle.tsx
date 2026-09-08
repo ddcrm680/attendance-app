@@ -4,22 +4,24 @@ import { useTheme } from "./ThemeProvider";
 export default function ThemeToggle() {
   const { preference, setPreference } = useTheme();
   const dark = preference === "dark";
+  const nextMode = dark ? "System" : "Dark";
 
   return (
     <button
       type="button"
       className="theme-toggle"
-      aria-label={"Use " + (dark ? "system" : "dark") + " theme"}
-      title={"Use " + (dark ? "system" : "dark") + " theme"}
+      aria-label={`Switch to ${nextMode} mode`}
+      title={`Switch to ${nextMode} mode`}
+      aria-pressed={dark}
       onClick={() => setPreference(dark ? "system" : "dark")}
     >
       {dark ? (
         <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 14.5v-9ZM8 20h8m-4-4v4" />
+          <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z" />
         </svg>
       ) : (
         <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M9.5 3.5 8.2 6.2 5.5 7.5l2.7 1.3 1.3 2.7 1.3-2.7 2.7-1.3-2.7-1.3-1.3-2.7ZM17 12.5l-1.1 2.4-2.4 1.1 2.4 1.1 1.1 2.4 1.1-2.4 2.4-1.1-2.4-1.1-1.1-2.4ZM4 15.5h2m12-11v2M5.5 6l1.4 1.4m10.6 7.1 1.4 1.4" />
+          <path d="M12 3v2m0 14v2M4.2 4.2l1.4 1.4m12.8 12.8 1.4 1.4M3 12h2m14 0h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
         </svg>
       )}
     </button>
