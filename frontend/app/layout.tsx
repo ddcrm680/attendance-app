@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   description: "Employee attendance and live location tracking",
   applicationName: appBrand.name,
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

@@ -7,7 +7,7 @@ import RoleGate from "@/components/RoleGate";
 import NavIcon from "@/components/NavIcon";
 import ThemeToggle from "@/components/ThemeToggle";
 import EmployeeDashboardReturn from "@/components/EmployeeDashboardReturn";
-import { appBrand } from "@/lib/brand";
+import AppBrand from "@/components/AppBrand";
 
 export default function EmployeeLayout({
   children,
@@ -41,9 +41,7 @@ export default function EmployeeLayout({
       {(user) => (
         <div className="employee-shell mx-auto min-h-screen max-w-3xl">
           <header className="app-border app-surface flex items-center justify-between border-b px-4 py-3">
-            <span className="text-sm font-semibold tracking-tight">
-              {appBrand.name}
-            </span>
+            <AppBrand />
             <div className="flex items-center gap-3">
               <EmployeeDashboardReturn role={user.role} />
               <ThemeToggle />

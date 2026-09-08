@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login, setToken } from "@/lib/api";
+import AppBrand from "@/components/AppBrand";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,6 +43,7 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
       >
+        <AppBrand variant="login" className="mb-6" />
         <h1 className="mb-1 text-xl font-medium">Sign in</h1>
         <p className="mb-6 text-sm text-gray-500">
           Attendance and live location tracking

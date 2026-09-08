@@ -6,7 +6,7 @@ import { logout, clearToken } from "@/lib/api";
 import RoleGate from "@/components/RoleGate";
 import NavIcon from "@/components/NavIcon";
 import ThemeToggle from "@/components/ThemeToggle";
-import { appBrand } from "@/lib/brand";
+import AppBrand from "@/components/AppBrand";
 
 export default function AdminLayout({
   children,
@@ -60,9 +60,7 @@ export default function AdminLayout({
       <div className="flex min-h-screen flex-col md:flex-row">
         <aside className="app-border app-surface w-full border-b p-4 md:w-56 md:border-b-0 md:border-r">
           <div className="mb-5 flex items-center justify-between">
-            <p className="text-sm font-semibold tracking-tight">
-              {appBrand.adminName}
-            </p>
+            <AppBrand workspace="admin" />
             <ThemeToggle />
           </div>
           <nav className="flex gap-1 overflow-x-auto md:block md:space-y-1">
