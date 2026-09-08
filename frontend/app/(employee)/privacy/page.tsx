@@ -1,13 +1,15 @@
+import PageHeader from "@/components/PageHeader";
+
 export default function PrivacyPage() {
   return (
     <section className="space-y-4">
-      <div>
-        <h1 className="text-lg font-semibold">Privacy and permissions</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Permissions are requested only when they are needed for attendance.
-        </p>
-      </div>
-      <div className="space-y-3 rounded-xl border bg-white p-4 text-sm text-gray-700">
+      <PageHeader
+        title="Privacy and permissions"
+        titleClassName="font-semibold"
+        description="Permissions are requested only when they are needed for attendance."
+        descriptionClassName="mt-1 text-gray-600"
+      />
+      <div className="app-card space-y-3 p-4 text-sm text-gray-700">
         <p>
           <b>Camera:</b> a fresh selfie is required when you punch in or out.
           Photos are stored privately and available only to you and authorised

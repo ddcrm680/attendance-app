@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
+import { appBrand } from "@/lib/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Attendance",
-    short_name: "Attendance",
+    name: appBrand.name,
+    short_name: appBrand.name,
     description:
       "Secure employee attendance and authorised live location tracking.",
     start_url: "/dashboard",

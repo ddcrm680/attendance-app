@@ -71,7 +71,7 @@ export default function AdminAttendanceDetail({
         </Link>
         <button
           onClick={() => window.print()}
-          className="no-print rounded border px-3 py-2 text-sm"
+          className="app-secondary-action no-print rounded px-3 py-2 text-sm"
         >
           Print
         </button>

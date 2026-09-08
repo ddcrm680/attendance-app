@@ -10,6 +10,7 @@ import {
   type WhatsAppLog,
   type WhatsAppSettings,
 } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
 
 export default function WhatsAppAdminPage() {
   const [settings, setSettings] = useState<WhatsAppSettings | null>(null);
@@ -57,12 +58,11 @@ export default function WhatsAppAdminPage() {
 
   return (
     <section className="space-y-5">
-      <div>
-        <h1 className="text-lg font-medium">WhatsApp delivery</h1>
-        <p className="text-sm text-gray-600">
-          Credentials remain server-side. Delivery is queued and recorded here.
-        </p>
-      </div>
+      <PageHeader
+        title="WhatsApp delivery"
+        description="Credentials remain server-side. Delivery is queued and recorded here."
+        descriptionClassName="text-gray-600"
+      />
       {error && (
         <p
           role="alert"
@@ -120,7 +120,7 @@ export default function WhatsAppAdminPage() {
             type="button"
             onClick={queueReport}
             disabled={!settings?.enabled}
-            className="rounded bg-gray-900 px-3 py-2 text-sm text-white disabled:opacity-50"
+            className="app-primary-action rounded px-3 py-2 text-sm disabled:opacity-50"
           >
             Queue daily summary
           </button>
@@ -128,7 +128,7 @@ export default function WhatsAppAdminPage() {
         <button
           type="button"
           onClick={load}
-          className="rounded border px-3 py-2 text-sm"
+          className="app-secondary-action rounded px-3 py-2 text-sm"
         >
           Refresh
         </button>

@@ -9,6 +9,7 @@ import {
   formatTime,
 } from "@/lib/presentation";
 import StatusBadge from "@/components/StatusBadge";
+import PageHeader from "@/components/PageHeader";
 export default function HistoryPage() {
   const [records, setRecords] = useState<Attendance[]>([]);
   const [from, setFrom] = useState("");
@@ -37,12 +38,10 @@ export default function HistoryPage() {
   }, [load]);
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-lg font-medium">Attendance history</h1>
-        <p className="text-sm text-gray-500">
-          Your verified attendance records.
-        </p>
-      </div>
+      <PageHeader
+        title="Attendance history"
+        description="Your verified attendance records."
+      />
       <div className="grid grid-cols-2 gap-2">
         <label className="text-xs">
           From
@@ -88,7 +87,7 @@ export default function HistoryPage() {
           <Link
             href={`/history/${r.id}`}
             key={r.id}
-            className="block rounded-xl border bg-white p-4"
+            className="app-card block p-4"
           >
             <div className="flex justify-between">
               <b>{formatDate(r.attendance_date)}</b>
@@ -117,7 +116,7 @@ export default function HistoryPage() {
           <button
             disabled={page === 1}
             onClick={() => setPage(page - 1)}
-            className="rounded border px-3 py-2 text-sm disabled:opacity-40"
+            className="app-secondary-action rounded px-3 py-2 text-sm disabled:opacity-40"
           >
             Previous
           </button>
@@ -127,7 +126,7 @@ export default function HistoryPage() {
           <button
             disabled={page === last}
             onClick={() => setPage(page + 1)}
-            className="rounded border px-3 py-2 text-sm disabled:opacity-40"
+            className="app-secondary-action rounded px-3 py-2 text-sm disabled:opacity-40"
           >
             Next
           </button>

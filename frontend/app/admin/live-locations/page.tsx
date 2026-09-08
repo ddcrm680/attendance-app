@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminLiveEmployees, type LiveEmployee } from "@/lib/api";
 import LiveLocationMap from "@/components/LiveLocationMap";
+import PageHeader from "@/components/PageHeader";
 
 const STALE_AFTER_MS = 2 * 60 * 1000;
 
@@ -32,14 +33,14 @@ export default function LiveLocationsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-medium">Live employee locations</h1>
-          <p className="text-sm text-gray-500">
-            Only employees with an open attendance session are shown. Refreshes
-            every 30 seconds.
-          </p>
-        </div>
-        <button onClick={load} className="rounded border px-3 py-2 text-sm">
+        <PageHeader
+          title="Live employee locations"
+          description="Only employees with an open attendance session are shown. Refreshes every 30 seconds."
+        />
+        <button
+          onClick={load}
+          className="app-secondary-action rounded px-3 py-2 text-sm"
+        >
           Refresh
         </button>
       </div>
@@ -63,7 +64,7 @@ export default function LiveLocationsPage() {
               return (
                 <div
                   key={employee.attendance_id}
-                  className="rounded-xl border bg-white p-3 text-sm"
+                  className="app-card p-3 text-sm"
                 >
                   <div className="flex justify-between">
                     <span className="font-medium">

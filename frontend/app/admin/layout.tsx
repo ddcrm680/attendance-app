@@ -6,6 +6,7 @@ import { logout, clearToken } from "@/lib/api";
 import RoleGate from "@/components/RoleGate";
 import NavIcon from "@/components/NavIcon";
 import ThemeToggle from "@/components/ThemeToggle";
+import { appBrand } from "@/lib/brand";
 
 export default function AdminLayout({
   children,
@@ -57,10 +58,10 @@ export default function AdminLayout({
   return (
     <RoleGate allowed={["hr_admin", "super_admin"]} fallback="/dashboard">
       <div className="flex min-h-screen flex-col md:flex-row">
-        <aside className="w-full border-b border-gray-200 bg-white p-4 md:w-56 md:border-b-0 md:border-r">
+        <aside className="app-border app-surface w-full border-b p-4 md:w-56 md:border-b-0 md:border-r">
           <div className="mb-5 flex items-center justify-between">
             <p className="text-sm font-semibold tracking-tight">
-              Attendance admin
+              {appBrand.adminName}
             </p>
             <ThemeToggle />
           </div>
@@ -69,9 +70,10 @@ export default function AdminLayout({
               <Link
                 key={link.href}
                 href={link.href}
+                aria-current={pathname === link.href ? "page" : undefined}
                 className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm ${
                   pathname === link.href
-                    ? "bg-gray-900 text-white"
+                    ? "app-nav-active"
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >

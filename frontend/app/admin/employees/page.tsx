@@ -14,6 +14,7 @@ import {
   type Employee,
   type Office,
 } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
 
 const blankForm = {
   employee_code: "",
@@ -193,14 +194,74 @@ export default function AdminEmployeesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="mb-4 text-lg font-medium">Employees</h1>
+        <PageHeader title="Employees" className="mb-4" />
 
         {loading && <p className="text-sm text-gray-500">Loading…</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {!loading && !error && (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <table className="w-full text-left text-sm">
+          <>
+            <div className="space-y-3 md:hidden">
+              {employees.map((emp) => (
+                <article key={emp.id} className="app-card p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{emp.name}</p>
+                      <p className="mt-0.5 text-sm text-gray-500">
+                        {emp.employee_code}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm text-gray-500">
+                      {emp.status}
+                    </span>
+                  </div>
+                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div>
+                      <dt className="text-xs text-gray-500">Department</dt>
+                      <dd className="mt-0.5 truncate">
+                        {emp.department?.name ?? "â€”"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-gray-500">Office</dt>
+                      <dd className="mt-0.5 truncate">
+                        {emp.office?.name ?? "â€”"}
+                      </dd>
+                    </div>
+                    <div className="col-span-2">
+                      <dt className="text-xs text-gray-500">Work from home</dt>
+                      <dd className="mt-0.5">
+                        {emp.wfh_eligible ? "WFH eligible" : "WFH not eligible"}
+                      </dd>
+                    </div>
+                  </dl>
+                  {canModify(emp) && (
+                    <div className="mt-4 flex items-center gap-4 border-t border-gray-100 pt-3">
+                      <button
+                        onClick={() => startEdit(emp)}
+                        className="text-sm text-gray-700 underline"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => remove(emp)}
+                        className="text-sm text-red-600 underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </article>
+              ))}
+              {employees.length === 0 && (
+                <div className="app-card px-4 py-6 text-center text-sm text-gray-400">
+                  No employees yet.
+                </div>
+              )}
+            </div>
+
+            <div className="app-card hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[900px] text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500">
                 <tr>
                   <th className="px-4 py-2">Name</th>
@@ -266,11 +327,12 @@ export default function AdminEmployeesPage() {
                 )}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </div>
 
-      <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-4">
+      <div className="app-card max-w-2xl p-4">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-sm font-medium">
             {editing ? `Edit ${editing.name}` : "Add employee"}
@@ -432,7 +494,7 @@ export default function AdminEmployeesPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 md:col-span-2"
+            className="app-primary-action rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 md:col-span-2"
           >
             {submitting
               ? "Saving…"

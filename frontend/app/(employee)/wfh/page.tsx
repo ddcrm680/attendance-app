@@ -8,6 +8,8 @@ import {
   type Employee,
   type WfhRequest,
 } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
+import StatusBadge from "@/components/StatusBadge";
 
 export default function WfhPage() {
   const [user, setUser] = useState<Employee | null>(null);
@@ -60,12 +62,10 @@ export default function WfhPage() {
     );
   return (
     <section className="space-y-4">
-      <div>
-        <h1 className="text-lg font-medium">Work from home</h1>
-        <p className="text-sm text-gray-500">
-          Eligibility and approval are decided by the server.
-        </p>
-      </div>
+      <PageHeader
+        title="Work from home"
+        description="Eligibility and approval are decided by the server."
+      />
       {!user?.wfh_eligible ? (
         <p className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
           WFH is not enabled for your account. Contact HR if your work
@@ -74,7 +74,7 @@ export default function WfhPage() {
       ) : (
         <form
           onSubmit={submit}
-          className="space-y-3 rounded-xl border bg-white p-4"
+          className="app-card space-y-3 p-4"
         >
           <label className="block text-sm">
             Requested date
@@ -95,7 +95,7 @@ export default function WfhPage() {
               className="mt-1 w-full rounded border p-2"
             />
           </label>
-          <button className="w-full rounded bg-gray-900 py-2 text-sm text-white">
+          <button className="app-primary-action w-full rounded py-2 text-sm">
             Request WFH
           </button>
         </form>
@@ -119,8 +119,9 @@ export default function WfhPage() {
           <div className="space-y-2">
             {requests.map((request) => (
               <div key={request.id} className="rounded border p-3 text-sm">
-                <p className="font-medium">
-                  {request.attendance_date.slice(0, 10)} · {request.status}
+                <p className="flex items-center gap-1 font-medium">
+                  <span>{request.attendance_date.slice(0, 10)} ·</span>
+                  <StatusBadge status={request.status} />
                 </p>
                 {request.reason && (
                   <p className="text-gray-500">{request.reason}</p>

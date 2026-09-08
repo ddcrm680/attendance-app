@@ -6,6 +6,7 @@ import {
   deleteHoliday,
   type Holiday,
 } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
 
 export default function AdminHolidaysPage() {
   const [items, setItems] = useState<Holiday[]>([]);
@@ -47,12 +48,11 @@ export default function AdminHolidaysPage() {
   }
   return (
     <section className="space-y-5">
-      <div>
-        <h1 className="text-lg font-medium">Holidays</h1>
-        <p className="text-sm text-gray-600">
-          Manage database-backed non-working dates.
-        </p>
-      </div>
+      <PageHeader
+        title="Holidays"
+        description="Manage database-backed non-working dates."
+        descriptionClassName="text-gray-600"
+      />
       {error && (
         <p role="alert" className="rounded bg-red-50 p-3 text-sm text-red-700">
           {error}{" "}
@@ -79,7 +79,7 @@ export default function AdminHolidaysPage() {
           onChange={(e) => setDate(e.target.value)}
           className="rounded border p-2 text-sm"
         />
-        <button className="rounded bg-gray-900 px-3 py-2 text-sm text-white">
+        <button className="app-primary-action rounded px-3 py-2 text-sm">
           Add holiday
         </button>
       </form>

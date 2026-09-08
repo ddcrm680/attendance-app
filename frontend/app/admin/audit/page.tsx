@@ -8,6 +8,7 @@ import {
   type AuditLog,
   type Employee,
 } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
 
 export default function AdminAuditPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -64,12 +65,11 @@ export default function AdminAuditPage() {
   };
   return (
     <section className="space-y-4">
-      <div>
-        <h1 className="text-lg font-medium">Audit log</h1>
-        <p className="text-sm text-gray-600">
-          Security-sensitive administrative actions. Records are append-only.
-        </p>
-      </div>
+      <PageHeader
+        title="Audit log"
+        description="Security-sensitive administrative actions. Records are append-only."
+        descriptionClassName="text-gray-600"
+      />
       <div className="grid gap-2 rounded border bg-gray-50 p-3 sm:grid-cols-2 lg:grid-cols-6">
         <label className="text-sm">
           From
@@ -123,7 +123,7 @@ export default function AdminAuditPage() {
           />
         </label>
         <button
-          className="self-end rounded border px-3 py-2 text-sm"
+          className="app-secondary-action self-end rounded px-3 py-2 text-sm"
           onClick={() => {
             setFrom("");
             setTo("");
@@ -188,7 +188,7 @@ export default function AdminAuditPage() {
       <div className="flex justify-between">
         <button
           disabled={loading || page === 1}
-          className="rounded border px-3 py-2 text-sm disabled:opacity-50"
+          className="app-secondary-action rounded px-3 py-2 text-sm disabled:opacity-50"
           onClick={() => setPage((p) => p - 1)}
         >
           Previous
@@ -198,7 +198,7 @@ export default function AdminAuditPage() {
         </span>
         <button
           disabled={loading || page >= lastPage}
-          className="rounded border px-3 py-2 text-sm disabled:opacity-50"
+          className="app-secondary-action rounded px-3 py-2 text-sm disabled:opacity-50"
           onClick={() => setPage((p) => p + 1)}
         >
           Next

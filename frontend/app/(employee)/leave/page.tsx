@@ -8,10 +8,15 @@ import {
   type LeaveRequest,
   type LeaveType,
 } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
+import StatusBadge from "@/components/StatusBadge";
+
+type Feedback = { tone: "success" | "error"; text: string };
+
 export default function LeavePage() {
   const [types, setTypes] = useState<LeaveType[]>([]);
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [type, setType] = useState("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -23,12 +28,15 @@ export default function LeavePage() {
         setLeaves(l.data);
         if (t[0]) setType((v) => v || String(t[0].id));
       })
-      .catch(() => setMessage("Unable to load leave information."));
+      .catch(() =>
+        setFeedback({ tone: "error", text: "Unable to load leave information." }),
+      );
   useEffect(() => {
     load();
   }, []);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    setFeedback(null);
     try {
       await createLeave({
         leave_type_id: Number(type),
@@ -36,26 +44,27 @@ export default function LeavePage() {
         end_date: end,
         reason: reason || undefined,
       });
-      setMessage("Leave request submitted.");
+      setFeedback({ tone: "success", text: "Leave request submitted." });
       setStart("");
       setEnd("");
       setReason("");
       load();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Unable to submit leave.");
+      setFeedback({
+        tone: "error",
+        text: e instanceof Error ? e.message : "Unable to submit leave.",
+      });
     }
   }
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-lg font-medium">Leave</h1>
-        <p className="text-sm text-gray-500">
-          Submit and track your leave requests.
-        </p>
-      </div>
+      <PageHeader
+        title="Leave"
+        description="Submit and track your leave requests."
+      />
       <form
         onSubmit={submit}
-        className="space-y-3 rounded-xl border bg-white p-4"
+        className="app-card space-y-3 p-4"
       >
         <select
           value={type}
@@ -88,16 +97,26 @@ export default function LeavePage() {
           placeholder="Reason (if applicable)"
           className="w-full rounded border p-2"
         />
-        <button className="w-full rounded bg-gray-900 py-2 text-white">
+        <button className="app-primary-action w-full rounded py-2">
           Submit request
         </button>
       </form>
-      {message && <p className="text-sm text-gray-600">{message}</p>}
+      {feedback && (
+        <p
+          role={feedback.tone === "error" ? "alert" : "status"}
+          className={`text-sm ${
+            feedback.tone === "error" ? "text-red-700" : "text-green-700"
+          }`}
+        >
+          {feedback.text}
+        </p>
+      )}
       <div className="space-y-2">
         {leaves.map((l) => (
           <div key={l.id} className="rounded-xl border p-3 text-sm">
-            <p className="font-medium">
-              {l.leave_type?.name} · {l.status}
+            <p className="flex items-center gap-1 font-medium">
+              <span>{l.leave_type?.name} ·</span>
+              <StatusBadge status={l.status} />
             </p>
             <p className="text-gray-500">
               {l.start_date.slice(0, 10)} to {l.end_date.slice(0, 10)}
@@ -107,7 +126,15 @@ export default function LeavePage() {
                 onClick={() =>
                   cancelLeave(l.id)
                     .then(load)
-                    .catch((e) => setMessage(e.message))
+                    .catch((e) =>
+                      setFeedback({
+                        tone: "error",
+                        text:
+                          e instanceof Error
+                            ? e.message
+                            : "Unable to cancel leave.",
+                      }),
+                    )
                 }
                 className="mt-2 text-xs underline"
               >

@@ -115,7 +115,7 @@ export default function SelfieCapture({
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/70 sm:items-center sm:justify-center">
       <section
-        className="w-full max-w-lg rounded-t-2xl bg-white p-4 sm:rounded-2xl"
+        className="app-surface w-full max-w-lg rounded-t-2xl p-4 sm:rounded-2xl"
         aria-label={`${title} selfie camera`}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -162,14 +162,14 @@ export default function SelfieCapture({
             <button
               onClick={openCamera}
               disabled={submitting}
-              className="rounded-xl border py-3 text-sm"
+              className="app-secondary-action rounded-xl py-3 text-sm"
             >
               Retake
             </button>
             <button
               onClick={confirm}
               disabled={!photo || submitting}
-              className="rounded-xl bg-gray-900 py-3 text-sm font-medium text-white disabled:opacity-50"
+              className="app-primary-action rounded-xl py-3 text-sm font-medium disabled:opacity-50"
             >
               {submitting ? "Submitting…" : "Confirm selfie"}
             </button>
@@ -178,7 +178,7 @@ export default function SelfieCapture({
           <button
             onClick={capture}
             disabled={opening || !!error}
-            className="w-full rounded-xl bg-gray-900 py-3 text-sm font-medium text-white disabled:opacity-50"
+            className="app-primary-action w-full rounded-xl py-3 text-sm font-medium disabled:opacity-50"
           >
             Take selfie
           </button>

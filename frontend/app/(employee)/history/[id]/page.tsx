@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import SecureAttendancePhoto from "@/components/SecureAttendancePhoto";
+import PageHeader from "@/components/PageHeader";
 import { attendanceDetail, type Attendance } from "@/lib/api";
 import {
   formatDate,
@@ -52,14 +53,11 @@ export default function AttendanceDetail({
       <Link href="/history" className="text-sm underline">
         ← Back to attendance history
       </Link>
-      <div>
-        <h1 className="text-lg font-medium">Attendance detail</h1>
-        <p className="text-sm text-gray-500">
-          {formatDate(attendance.attendance_date)} ·{" "}
-          {formatStatus(attendance.status)}
-        </p>
-      </div>
-      <section className="space-y-2 rounded-xl border bg-white p-4 text-sm">
+      <PageHeader
+        title="Attendance detail"
+        description={`${formatDate(attendance.attendance_date)} · ${formatStatus(attendance.status)}`}
+      />
+      <section className="app-card space-y-2 p-4 text-sm">
         <p>
           <b>Mode:</b> {formatMode(attendance.mode)}
         </p>

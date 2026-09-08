@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminDashboard, adminDashboardCharts } from "@/lib/api";
 import StatCard from "@/components/StatCard";
+import PageHeader from "@/components/PageHeader";
 import { formatDate, formatDuration } from "@/lib/presentation";
 
 type Stats = Awaited<ReturnType<typeof adminDashboard>>;
@@ -34,7 +35,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-lg font-medium">Today — {stats.date}</h1>
+      <PageHeader title={`Today — ${stats.date}`} className="mb-4" />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard label="Total employees" value={stats.total_employees} />
         <StatCard label="Present today" value={stats.present_today} />
@@ -49,7 +50,7 @@ export default function AdminDashboardPage() {
         />
       </div>
       <section className="mt-6 grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border bg-white p-4">
+        <div className="app-card p-4">
           <h2 className="mb-3 font-medium">Daily attendance (30 days)</h2>
           {charts?.daily.length ? (
             <div className="space-y-1">
@@ -70,7 +71,7 @@ export default function AdminDashboardPage() {
             <p className="text-sm text-gray-500">No attendance data yet.</p>
           )}
         </div>
-        <div className="rounded-xl border bg-white p-4">
+        <div className="app-card p-4">
           <h2 className="mb-3 font-medium">Department attendance</h2>
           {charts?.departments.length ? (
             <div className="space-y-2">

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { calendarOverview, type CalendarOverview } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
 
 export default function CalendarPage() {
   const [calendar, setCalendar] = useState<CalendarOverview | null>(null);
@@ -34,14 +35,11 @@ export default function CalendarPage() {
     );
   return (
     <section className="space-y-4">
-      <div>
-        <h1 className="text-lg font-medium">Work calendar</h1>
-        <p className="text-sm text-gray-500">
-          Today&apos;s authoritative attendance eligibility and upcoming
-          holidays.
-        </p>
-      </div>
-      <div className="rounded-xl border bg-white p-4">
+      <PageHeader
+        title="Work calendar"
+        description="Today’s authoritative attendance eligibility and upcoming holidays."
+      />
+      <div className="app-card p-4">
         <p className="text-sm text-gray-500">{calendar.date}</p>
         <p className="mt-1 text-lg font-medium capitalize">
           {calendar.status.replace("_", " ")}

@@ -8,6 +8,7 @@ import {
   updateDepartment,
   type Department,
 } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
 
 export default function AdminDepartmentsPage() {
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -77,11 +78,11 @@ export default function AdminDepartmentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="mb-4 text-lg font-medium">Departments</h1>
+        <PageHeader title="Departments" className="mb-4" />
         {loading && <p className="text-sm text-gray-500">Loading…</p>}
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         {!loading && (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <div className="app-card overflow-hidden">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500">
                 <tr>
@@ -142,7 +143,7 @@ export default function AdminDepartmentsPage() {
           </div>
         )}
       </div>
-      <div className="max-w-md rounded-xl border border-gray-200 bg-white p-4">
+      <div className="app-card max-w-md p-4">
         <div className="mb-3 flex justify-between">
           <p className="text-sm font-medium">
             {editing ? "Edit department" : "Add department"}
@@ -155,13 +156,13 @@ export default function AdminDepartmentsPage() {
         </div>
         <form onSubmit={submit} className="space-y-3">
           <input
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="app-form-control"
             placeholder="Department name"
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
           <select
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="app-form-control"
             value={status}
             onChange={(event) =>
               setStatus(event.target.value as "active" | "inactive")
@@ -173,7 +174,7 @@ export default function AdminDepartmentsPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="app-primary-action w-full rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
           >
             {submitting
               ? "Saving…"

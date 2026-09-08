@@ -1,7 +1,9 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { adminLeaves, reviewLeave, type AdminLeaveRequest } from "@/lib/api";
-import { formatDate, formatStatus } from "@/lib/presentation";
+import { formatDate } from "@/lib/presentation";
+import PageHeader from "@/components/PageHeader";
+import StatusBadge from "@/components/StatusBadge";
 
 export default function AdminLeavePage() {
   const [items, setItems] = useState<AdminLeaveRequest[]>([]);
@@ -32,12 +34,11 @@ export default function AdminLeavePage() {
   }
   return (
     <section className="space-y-4">
-      <div>
-        <h1 className="text-lg font-medium">Leave management</h1>
-        <p className="text-sm text-gray-600">
-          Review requests within your administrative scope.
-        </p>
-      </div>
+      <PageHeader
+        title="Leave management"
+        description="Review requests within your administrative scope."
+        descriptionClassName="text-gray-600"
+      />
       {error && (
         <p role="alert" className="rounded bg-red-50 p-3 text-sm text-red-700">
           {error}{" "}
@@ -72,7 +73,9 @@ export default function AdminLeavePage() {
                   <td className="p-3">
                     {formatDate(item.start_date)} – {formatDate(item.end_date)}
                   </td>
-                  <td className="p-3">{formatStatus(item.status)}</td>
+                  <td className="p-3">
+                    <StatusBadge status={item.status} />
+                  </td>
                   <td className="p-3">
                     {item.status === "pending" && (
                       <>

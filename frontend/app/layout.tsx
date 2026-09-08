@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import "../styles/globals.css";
 import PwaStatus from "@/components/PwaStatus";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { appBrand } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "Attendance",
+  title: appBrand.name,
   description: "Employee attendance and live location tracking",
-  applicationName: "Attendance",
+  applicationName: appBrand.name,
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Attendance",
+    title: appBrand.name,
   },
 };
 

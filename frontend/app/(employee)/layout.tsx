@@ -7,6 +7,7 @@ import RoleGate from "@/components/RoleGate";
 import NavIcon from "@/components/NavIcon";
 import ThemeToggle from "@/components/ThemeToggle";
 import EmployeeDashboardReturn from "@/components/EmployeeDashboardReturn";
+import { appBrand } from "@/lib/brand";
 
 export default function EmployeeLayout({
   children,
@@ -38,10 +39,10 @@ export default function EmployeeLayout({
   return (
     <RoleGate fallback="/admin">
       {(user) => (
-        <div className="mx-auto min-h-screen max-w-3xl pb-20">
-          <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
+        <div className="employee-shell mx-auto min-h-screen max-w-3xl">
+          <header className="app-border app-surface flex items-center justify-between border-b px-4 py-3">
             <span className="text-sm font-semibold tracking-tight">
-              Attendance
+              {appBrand.name}
             </span>
             <div className="flex items-center gap-3">
               <EmployeeDashboardReturn role={user.role} />
@@ -58,14 +59,15 @@ export default function EmployeeLayout({
 
           <main className="p-4 md:p-6">{children}</main>
 
-          <nav className="fixed bottom-0 left-0 right-0 z-40 mx-auto flex max-w-3xl border-t border-gray-200 bg-white">
+          <nav className="app-border app-surface employee-bottom-nav fixed bottom-0 left-0 right-0 z-40 mx-auto flex max-w-3xl border-t">
             {tabs.map((tab) => (
               <Link
                 key={tab.href}
                 href={tab.href}
+                aria-current={pathname === tab.href ? "page" : undefined}
                 className={`flex min-w-0 flex-1 flex-col items-center gap-1 py-2 text-[11px] transition-col ${
                   pathname === tab.href
-                    ? "font-medium text-gray-900"
+                    ? "app-nav-active-text font-medium"
                     : "text-gray-400"
                 }`}
               >

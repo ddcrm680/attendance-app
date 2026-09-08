@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import { formatDate, formatDuration, formatMode } from "@/lib/presentation";
 import StatusBadge from "@/components/StatusBadge";
+import PageHeader from "@/components/PageHeader";
 
 const controlClass =
   "min-h-10 rounded border border-slate-300 bg-white px-3 text-sm text-slate-900";
@@ -130,14 +131,12 @@ export default function AdminAttendance() {
 
   return (
     <section className="space-y-4">
-      <div>
-        <h1 className="text-lg font-medium text-slate-900">
-          Attendance report
-        </h1>
-        <p className="text-sm text-slate-600">
-          Use the filters to query attendance records on the server.
-        </p>
-      </div>
+      <PageHeader
+        title="Attendance report"
+        description="Use the filters to query attendance records on the server."
+        titleClassName="font-medium text-slate-900"
+        descriptionClassName="text-slate-600"
+      />
 
       <div className="grid gap-2 rounded border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 xl:grid-cols-4">
         <label className="grid gap-1 text-sm text-slate-700">
@@ -248,7 +247,7 @@ export default function AdminAttendance() {
           <button
             type="button"
             onClick={resetFilters}
-            className="min-h-10 rounded border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 hover:bg-slate-100"
+            className="app-secondary-action min-h-10 rounded px-3 text-sm font-medium"
           >
             Reset filters
           </button>
@@ -262,7 +261,7 @@ export default function AdminAttendance() {
             type="button"
             disabled={Boolean(exporting)}
             onClick={() => exportReport(format)}
-            className="min-h-10 rounded border border-slate-300 bg-white px-3 text-sm font-medium uppercase disabled:opacity-50"
+            className="app-secondary-action min-h-10 rounded px-3 text-sm font-medium uppercase disabled:opacity-50"
           >
             {exporting === format ? "Exporting…" : `Export ${format}`}
           </button>
@@ -270,7 +269,7 @@ export default function AdminAttendance() {
         <button
           type="button"
           onClick={() => window.print()}
-          className="no-print min-h-10 rounded border border-slate-300 bg-white px-3 text-sm font-medium"
+          className="app-secondary-action no-print min-h-10 rounded px-3 text-sm font-medium"
         >
           Print
         </button>
@@ -289,16 +288,16 @@ export default function AdminAttendance() {
       ) : null}
 
       <div className="overflow-x-auto rounded border border-slate-200 bg-white">
-        <table className="w-full min-w-[560px] text-sm">
+        <table className="w-full min-w-[800px] text-sm md:min-w-[560px]">
           <thead className="bg-slate-50 text-left text-slate-700">
             <tr>
-              <th className="p-3">Date</th>
-              <th className="p-3">Employee</th>
-              <th className="p-3">Department</th>
-              <th className="p-3">Office</th>
-              <th className="p-3">Mode</th>
-              <th className="p-3">Status</th>
-              <th className="p-3 text-right">Working</th>
+              <th className="p-3 whitespace-nowrap md:whitespace-normal">Date</th>
+              <th className="min-w-40 p-3 md:min-w-0">Employee</th>
+              <th className="min-w-32 p-3 md:min-w-0">Department</th>
+              <th className="min-w-32 p-3 md:min-w-0">Office</th>
+              <th className="p-3 whitespace-nowrap md:whitespace-normal">Mode</th>
+              <th className="p-3 whitespace-nowrap md:whitespace-normal">Status</th>
+              <th className="p-3 text-right whitespace-nowrap md:whitespace-normal">Working</th>
             </tr>
           </thead>
           <tbody>
@@ -307,7 +306,7 @@ export default function AdminAttendance() {
                 key={attendance.id}
                 className="border-t border-slate-100 text-slate-800"
               >
-                <td className="p-3">
+                <td className="p-3 whitespace-nowrap md:whitespace-normal">
                   <Link
                     className="underline"
                     href={`/admin/attendance/${attendance.id}`}
@@ -322,11 +321,11 @@ export default function AdminAttendance() {
                   {attendance.employee?.department?.name ?? "—"}
                 </td>
                 <td className="p-3">{attendance.office?.name ?? "—"}</td>
-                <td className="p-3">{formatMode(attendance.mode)}</td>
-                <td className="p-3">
+                <td className="p-3 whitespace-nowrap md:whitespace-normal">{formatMode(attendance.mode)}</td>
+                <td className="p-3 whitespace-nowrap md:whitespace-normal">
                   <StatusBadge status={attendance.status} />
                 </td>
-                <td className="p-3 text-right">
+                <td className="p-3 text-right whitespace-nowrap md:whitespace-normal">
                   {formatDuration(attendance.working_minutes)}
                 </td>
               </tr>
@@ -353,7 +352,7 @@ export default function AdminAttendance() {
           type="button"
           disabled={loading || page === 1}
           onClick={() => setPage((current) => current - 1)}
-          className="min-h-10 rounded border px-3 disabled:cursor-not-allowed disabled:opacity-50"
+          className="app-secondary-action min-h-10 rounded px-3 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Previous
         </button>
@@ -364,7 +363,7 @@ export default function AdminAttendance() {
           type="button"
           disabled={loading || page >= lastPage}
           onClick={() => setPage((current) => current + 1)}
-          className="min-h-10 rounded border px-3 disabled:cursor-not-allowed disabled:opacity-50"
+          className="app-secondary-action min-h-10 rounded px-3 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Next
         </button>

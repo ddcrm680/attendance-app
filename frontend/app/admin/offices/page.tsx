@@ -8,6 +8,7 @@ import {
   updateOffice,
   type Office,
 } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
 
 export default function AdminOfficesPage() {
   const [offices, setOffices] = useState<Office[]>([]);
@@ -95,7 +96,7 @@ export default function AdminOfficesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="mb-4 text-lg font-medium">Offices & geofences</h1>
+        <PageHeader title="Offices & geofences" className="mb-4" />
         {loading && <p className="text-sm text-gray-500">Loading…</p>}
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         {!loading && (
@@ -103,7 +104,7 @@ export default function AdminOfficesPage() {
             {offices.map((office) => (
               <div
                 key={office.id}
-                className="rounded-xl border border-gray-200 bg-white p-4"
+                className="app-card p-4"
               >
                 <p className="font-medium">{office.name}</p>
                 <p className="text-sm text-gray-500">
@@ -140,7 +141,7 @@ export default function AdminOfficesPage() {
           </div>
         )}
       </div>
-      <div className="max-w-md rounded-xl border border-gray-200 bg-white p-4">
+      <div className="app-card max-w-md p-4">
         <div className="mb-3 flex justify-between">
           <p className="text-sm font-medium">
             {editing ? `Edit ${editing.name}` : "Add office"}
@@ -153,39 +154,39 @@ export default function AdminOfficesPage() {
         </div>
         <form onSubmit={submit} className="space-y-3">
           <input
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="app-form-control"
             placeholder="Office name"
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
           <input
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="app-form-control"
             placeholder="Address"
             value={address}
             onChange={(event) => setAddress(event.target.value)}
           />
           <div className="grid grid-cols-2 gap-3">
             <input
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="app-form-control"
               placeholder="Latitude"
               value={latitude}
               onChange={(event) => setLatitude(event.target.value)}
             />
             <input
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="app-form-control"
               placeholder="Longitude"
               value={longitude}
               onChange={(event) => setLongitude(event.target.value)}
             />
           </div>
           <input
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="app-form-control"
             placeholder="Geofence radius (meters)"
             value={radius}
             onChange={(event) => setRadius(event.target.value)}
           />
           <select
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            className="app-form-control"
             value={status}
             onChange={(event) =>
               setStatus(event.target.value as "active" | "inactive")
@@ -198,7 +199,7 @@ export default function AdminOfficesPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="app-primary-action w-full rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
           >
             {submitting ? "Saving…" : editing ? "Save office" : "Add office"}
           </button>

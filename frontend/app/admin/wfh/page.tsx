@@ -5,7 +5,9 @@ import {
   reviewWfhRequest,
   type AdminWfhRequest,
 } from "@/lib/api";
-import { formatDate, formatStatus } from "@/lib/presentation";
+import { formatDate } from "@/lib/presentation";
+import PageHeader from "@/components/PageHeader";
+import StatusBadge from "@/components/StatusBadge";
 
 export default function AdminWfhPage() {
   const [items, setItems] = useState<AdminWfhRequest[]>([]);
@@ -36,12 +38,11 @@ export default function AdminWfhPage() {
   }
   return (
     <section className="space-y-4">
-      <div>
-        <h1 className="text-lg font-medium">WFH requests</h1>
-        <p className="text-sm text-gray-600">
-          Review employee work-from-home requests.
-        </p>
-      </div>
+      <PageHeader
+        title="WFH requests"
+        description="Review employee work-from-home requests."
+        descriptionClassName="text-gray-600"
+      />
       {error && (
         <p role="alert" className="rounded bg-red-50 p-3 text-sm text-red-700">
           {error}{" "}
@@ -74,7 +75,9 @@ export default function AdminWfhPage() {
                   </td>
                   <td className="p-3">{formatDate(item.attendance_date)}</td>
                   <td className="p-3">{item.reason || "—"}</td>
-                  <td className="p-3">{formatStatus(item.status)}</td>
+                  <td className="p-3">
+                    <StatusBadge status={item.status} />
+                  </td>
                   <td className="p-3">
                     {item.status === "pending" && (
                       <>
