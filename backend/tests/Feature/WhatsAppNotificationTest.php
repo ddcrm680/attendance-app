@@ -88,6 +88,99 @@ class WhatsAppNotificationTest extends TestCase
         ], $template?->bodyParameters);
         $this->assertSame([], $template?->headerParameters);
         $this->assertSame([], $template?->buttonParameters);
+        $this->assertSame('attendance_punch_in', app(WhatsAppNotificationService::class)->activeTemplateFor($log)?->name);
+    }
+
+    public function test_punch_out_template_candidate_has_exact_named_parameters(): void
+    {
+        $attendance = $this->attendance($this->employee());
+        $attendance->update(['check_out' => Carbon::parse('2026-04-06 18:12:00')]);
+        $log = WhatsAppMessageLog::create([
+            'attendance_id' => $attendance->id,
+            'notification_type' => 'punch_out',
+            'recipient' => '+919000000000',
+            'provider' => 'cloud',
+            'status' => 'queued',
+            'idempotency_key' => 'punch-out-template-test',
+        ]);
+
+        $template = app(WhatsAppNotificationService::class)->templateFor($log);
+
+        $this->assertSame('attendance_punch_out', $template?->name);
+        $this->assertSame('en_US', $template?->languageCode);
+        $this->assertSame([
+            'employee_name' => 'Test Employee',
+            'employee_code' => 'EMP-001',
+            'check_out_time' => '18:12',
+            'attendance_date' => '2026-04-06',
+        ], $template?->bodyParameters);
+        $this->assertSame([], $template?->headerParameters);
+        $this->assertSame([], $template?->buttonParameters);
+        $this->assertNull(app(WhatsAppNotificationService::class)->activeTemplateFor($log));
+    }
+
+    public function test_late_template_candidate_formats_late_minutes_as_integer_text(): void
+    {
+        $attendance = $this->attendance($this->employee());
+        $attendance->update(['status' => 'late', 'late_minutes' => 37]);
+        $log = WhatsAppMessageLog::create([
+            'attendance_id' => $attendance->id,
+            'notification_type' => 'late',
+            'recipient' => '+919000000000',
+            'provider' => 'cloud',
+            'status' => 'queued',
+            'idempotency_key' => 'late-template-test',
+        ]);
+
+        $template = app(WhatsAppNotificationService::class)->templateFor($log);
+
+        $this->assertSame('attendance_late', $template?->name);
+        $this->assertSame('en_US', $template?->languageCode);
+        $this->assertSame([
+            'employee_name' => 'Test Employee',
+            'employee_code' => 'EMP-001',
+            'check_in_time' => '09:00',
+            'attendance_date' => '2026-04-06',
+            'late_minutes' => '37',
+        ], $template?->bodyParameters);
+        $this->assertSame([], $template?->headerParameters);
+        $this->assertSame([], $template?->buttonParameters);
+        $this->assertNull(app(WhatsAppNotificationService::class)->activeTemplateFor($log));
+    }
+
+    public function test_daily_summary_template_candidate_uses_existing_human_readable_average(): void
+    {
+        $attendance = $this->attendance($this->employee());
+        $attendance->update([
+            'check_out' => Carbon::parse('2026-04-06 17:24:00'),
+            'working_minutes' => 504,
+        ]);
+        $log = WhatsAppMessageLog::create([
+            'notification_type' => 'daily_summary',
+            'recipient' => '+919000000000',
+            'provider' => 'cloud',
+            'status' => 'queued',
+            'idempotency_key' => 'daily-summary-template-test',
+            'payload' => ['date' => '2026-04-06'],
+        ]);
+
+        $template = app(WhatsAppNotificationService::class)->templateFor($log);
+
+        $this->assertSame('attendance_daily_summary', $template?->name);
+        $this->assertSame('en_US', $template?->languageCode);
+        $this->assertSame([
+            'attendance_date' => '2026-04-06',
+            'total_employees' => 1,
+            'present_count' => 1,
+            'absent_count' => 0,
+            'on_leave_count' => 0,
+            'late_count' => 0,
+            'currently_working_count' => 0,
+            'average_working_hours' => '8h 24m',
+        ], $template?->bodyParameters);
+        $this->assertSame([], $template?->headerParameters);
+        $this->assertSame([], $template?->buttonParameters);
+        $this->assertNull(app(WhatsAppNotificationService::class)->activeTemplateFor($log));
     }
 
     public function test_punch_in_job_uses_template_without_photo_and_non_punch_in_remains_plain_text(): void

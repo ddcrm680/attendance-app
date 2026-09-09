@@ -37,7 +37,7 @@ class SendWhatsAppMessage implements ShouldQueue
 
         $log->update(['status' => 'processing', 'attempts' => $log->attempts + 1, 'error_message' => null]);
         try {
-            $template = $notifications->templateFor($log);
+            $template = $notifications->activeTemplateFor($log);
             $result = $provider->send(
                 $log->getRawOriginal('recipient'),
                 $notifications->bodyFor($log),
