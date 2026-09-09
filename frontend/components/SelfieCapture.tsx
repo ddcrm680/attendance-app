@@ -17,6 +17,7 @@ export default function SelfieCapture({
 }: Props) {
   const video = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);
+  const cameraRequest = useRef(0);
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +28,7 @@ export default function SelfieCapture({
     stream.current = null;
   };
   const openCamera = async () => {
+    const requestId = ++cameraRequest.current;
     setError(null);
     setOpening(true);
     setPhoto(null);
@@ -41,7 +43,7 @@ export default function SelfieCapture({
     }
     try {
       stopCamera();
-      stream.current = await navigator.mediaDevices.getUserMedia({
+      const nextStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "user",
           width: { ideal: 1280 },
@@ -49,24 +51,32 @@ export default function SelfieCapture({
         },
         audio: false,
       });
+      if (cameraRequest.current !== requestId) {
+        nextStream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      stream.current = nextStream;
       if (video.current) {
-        video.current.srcObject = stream.current;
+        video.current.srcObject = nextStream;
         await video.current.play();
       }
     } catch (cause) {
-      setError(
-        cause instanceof DOMException && cause.name === "NotAllowedError"
-          ? "Camera permission was denied. Allow camera access to take a selfie."
-          : "Unable to open the camera. Check that no other app is using it.",
-      );
+      if (cameraRequest.current === requestId) {
+        setError(
+          cause instanceof DOMException && cause.name === "NotAllowedError"
+            ? "Camera permission was denied. Allow camera access to take a selfie."
+            : "Unable to open the camera. Check that no other app is using it.",
+        );
+      }
     } finally {
-      setOpening(false);
+      if (cameraRequest.current === requestId) setOpening(false);
     }
   };
 
   useEffect(() => {
     openCamera();
     return () => {
+      cameraRequest.current += 1;
       stopCamera();
       if (preview) URL.revokeObjectURL(preview);
     };
@@ -75,6 +85,7 @@ export default function SelfieCapture({
     const element = video.current;
     if (!element || !element.videoWidth)
       return setError("The camera is not ready yet.");
+    cameraRequest.current += 1;
     const canvas = document.createElement("canvas");
     canvas.width = element.videoWidth;
     canvas.height = element.videoHeight;
@@ -95,6 +106,7 @@ export default function SelfieCapture({
     );
   };
   const cancel = () => {
+    cameraRequest.current += 1;
     stopCamera();
     if (preview) URL.revokeObjectURL(preview);
     onCancel();
