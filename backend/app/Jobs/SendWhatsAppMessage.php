@@ -37,7 +37,13 @@ class SendWhatsAppMessage implements ShouldQueue
 
         $log->update(['status' => 'processing', 'attempts' => $log->attempts + 1, 'error_message' => null]);
         try {
-            $result = $provider->send($log->getRawOriginal('recipient'), $notifications->bodyFor($log), $this->photoPath($log));
+            $template = $notifications->templateFor($log);
+            $result = $provider->send(
+                $log->getRawOriginal('recipient'),
+                $notifications->bodyFor($log),
+                $template ? null : $this->photoPath($log),
+                $template,
+            );
             $log->update([
                 'status' => 'sent',
                 'provider_message_id' => $result['message_id'] ?? null,

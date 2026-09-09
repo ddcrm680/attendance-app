@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\WhatsAppMessageLog;
+use App\Services\WhatsApp\WhatsAppTemplate;
 use Illuminate\Support\Carbon;
 use Throwable;
 
@@ -66,6 +67,25 @@ class WhatsAppNotificationService
             ."({$attendance->employee->employee_code}) on "
             ."{$attendance->attendance_date->toDateString()} at "
             .$formattedTime.$extra.'.';
+    }
+
+    public function templateFor(WhatsAppMessageLog $log): ?WhatsAppTemplate
+    {
+        if ($log->notification_type !== 'punch_in') {
+            return null;
+        }
+
+        $attendance = $log->attendance()->with('employee:id,name')->firstOrFail();
+
+        return new WhatsAppTemplate(
+            'attendance_punch_in',
+            'en_US',
+            [
+                'employee_name' => $attendance->employee->name,
+                'check_in_time' => optional($attendance->check_in)->timezone(config('app.timezone'))->format('H:i'),
+                'attendance_date' => $attendance->attendance_date->toDateString(),
+            ],
+        );
     }
 
     private function queue(string $type, string $recipient, string $key, ?Attendance $attendance, array $payload): WhatsAppMessageLog

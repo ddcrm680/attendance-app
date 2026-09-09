@@ -65,6 +65,74 @@ class WhatsAppNotificationTest extends TestCase
         $this->assertDatabaseHas('whatsapp_message_logs', ['id' => $log->id, 'status' => 'sent', 'provider_message_id' => 'wamid.test']);
     }
 
+    public function test_punch_in_selects_the_approved_template_with_exact_parameters(): void
+    {
+        $attendance = $this->attendance($this->employee());
+        $log = WhatsAppMessageLog::create([
+            'attendance_id' => $attendance->id,
+            'notification_type' => 'punch_in',
+            'recipient' => '+919000000000',
+            'provider' => 'cloud',
+            'status' => 'queued',
+            'idempotency_key' => 'punch-in-template-test',
+        ]);
+
+        $template = app(WhatsAppNotificationService::class)->templateFor($log);
+
+        $this->assertSame('attendance_punch_in', $template?->name);
+        $this->assertSame('en_US', $template?->languageCode);
+        $this->assertSame([
+            'employee_name' => 'Test Employee',
+            'check_in_time' => '09:00',
+            'attendance_date' => '2026-04-06',
+        ], $template?->bodyParameters);
+        $this->assertSame([], $template?->headerParameters);
+        $this->assertSame([], $template?->buttonParameters);
+    }
+
+    public function test_punch_in_job_uses_template_without_photo_and_non_punch_in_remains_plain_text(): void
+    {
+        $attendance = $this->attendance($this->employee());
+        $attendance->update([
+            'check_in_photo_path' => 'attendance/check-in.jpg',
+            'check_out' => Carbon::parse('2026-04-06 18:00:00'),
+        ]);
+        config()->set('whatsapp.attach_attendance_photo', true);
+        $punchIn = WhatsAppMessageLog::create([
+            'attendance_id' => $attendance->id,
+            'notification_type' => 'punch_in',
+            'recipient' => '+919000000000',
+            'provider' => 'cloud',
+            'status' => 'queued',
+            'idempotency_key' => 'punch-in-job-template-test',
+        ]);
+        $punchOut = WhatsAppMessageLog::create([
+            'attendance_id' => $attendance->id,
+            'notification_type' => 'punch_out',
+            'recipient' => '+919000000000',
+            'provider' => 'cloud',
+            'status' => 'queued',
+            'idempotency_key' => 'punch-out-job-plain-text-test',
+        ]);
+        $capture = (object) ['calls' => []];
+        $provider = new class($capture) implements WhatsAppProvider {
+            public function __construct(private object $capture) {}
+            public function send(string $recipient, string $body, ?string $photoPath = null, ?WhatsAppTemplate $template = null): array
+            {
+                $this->capture->calls[] = compact('recipient', 'body', 'photoPath', 'template');
+                return ['message_id' => 'wamid.template'];
+            }
+        };
+
+        (new SendWhatsAppMessage($punchIn->id))->handle($provider, app(WhatsAppNotificationService::class));
+        (new SendWhatsAppMessage($punchOut->id))->handle($provider, app(WhatsAppNotificationService::class));
+
+        $this->assertSame('attendance_punch_in', $capture->calls[0]['template']->name);
+        $this->assertNull($capture->calls[0]['photoPath']);
+        $this->assertNull($capture->calls[1]['template']);
+        $this->assertStringStartsWith('Punch out:', $capture->calls[1]['body']);
+    }
+
     public function test_temporary_delivery_failure_does_not_change_attendance(): void
     {
         config()->set('queue.default', 'sync'); $employee = $this->employee(); Sanctum::actingAs($employee);
@@ -99,7 +167,7 @@ class WhatsAppNotificationTest extends TestCase
             && $request['type'] === 'text');
     }
 
-    public function test_cloud_provider_builds_template_components_without_exposing_meta_payload_to_application_code(): void
+    public function test_cloud_provider_builds_the_approved_punch_in_template_payload(): void
     {
         config()->set('whatsapp.base_url', 'https://graph.facebook.com');
         config()->set('whatsapp.graph_api_version', 'v99.0');
@@ -107,22 +175,46 @@ class WhatsAppNotificationTest extends TestCase
         config()->set('whatsapp.access_token', 'test-token');
         Http::fake(['*' => Http::response(['messages' => [['id' => 'wamid.template']]], 200)]);
 
-        app(CloudApiWhatsAppProvider::class)->send(
-            '+919000000000',
-            '',
-            null,
-            new WhatsAppTemplate('attendance_update', 'en_US', ['Alice'], ['Today'], [['index' => 0, 'parameters' => ['open']]])
-        );
+        $attendance = $this->attendance($this->employee());
+        $log = WhatsAppMessageLog::create(['attendance_id' => $attendance->id, 'notification_type' => 'punch_in', 'recipient' => '+919000000000', 'provider' => 'cloud', 'status' => 'queued', 'idempotency_key' => 'provider-template-test']);
+        $template = app(WhatsAppNotificationService::class)->templateFor($log);
+
+        app(CloudApiWhatsAppProvider::class)->send('+919000000000', '', null, $template);
 
         Http::assertSent(function ($request): bool {
             $payload = $request->data();
             return $payload['type'] === 'template'
-                && $payload['template']['name'] === 'attendance_update'
+                && $payload['template']['name'] === 'attendance_punch_in'
                 && $payload['template']['language']['code'] === 'en_US'
-                && $payload['template']['components'][0]['type'] === 'header'
-                && $payload['template']['components'][1]['parameters'][0]['text'] === 'Alice'
-                && $payload['template']['components'][2]['type'] === 'button';
+                && count($payload['template']['components']) === 1
+                && $payload['template']['components'][0]['type'] === 'body'
+                && $payload['template']['components'][0]['parameters'] === [
+                    ['type' => 'text', 'text' => 'Test Employee', 'parameter_name' => 'employee_name'],
+                    ['type' => 'text', 'text' => '09:00', 'parameter_name' => 'check_in_time'],
+                    ['type' => 'text', 'text' => '2026-04-06', 'parameter_name' => 'attendance_date'],
+                ];
         });
+    }
+
+    public function test_cloud_provider_keeps_positional_template_parameters_unnamed(): void
+    {
+        config()->set('whatsapp.base_url', 'https://graph.facebook.com');
+        config()->set('whatsapp.graph_api_version', 'v99.0');
+        config()->set('whatsapp.phone_number_id', 'phone-123');
+        config()->set('whatsapp.access_token', 'test-token');
+        Http::fake(['*' => Http::response(['messages' => [['id' => 'wamid.positional']]], 200)]);
+
+        app(CloudApiWhatsAppProvider::class)->send(
+            '+919000000000',
+            '',
+            null,
+            new WhatsAppTemplate('attendance_update', 'en_US', ['Alice', 'Today']),
+        );
+
+        Http::assertSent(fn ($request) => $request->data()['template']['components'][0]['parameters'] === [
+            ['type' => 'text', 'text' => 'Alice'],
+            ['type' => 'text', 'text' => 'Today'],
+        ]);
     }
 
     public function test_cloud_provider_supplies_mime_type_for_private_photo_upload(): void
@@ -167,6 +259,32 @@ class WhatsAppNotificationTest extends TestCase
 
         $this->expectException(WhatsAppPermanentException::class);
         app(CloudApiWhatsAppProvider::class)->send('+919000000000', 'hello');
+    }
+
+    public function test_meta_client_error_diagnostics_are_sanitized_and_persisted(): void
+    {
+        config()->set('queue.default', 'sync');
+        config()->set('whatsapp.phone_number_id', 'phone-123');
+        config()->set('whatsapp.access_token', 'test-token');
+        Http::fake(['*' => Http::response([
+            'error' => [
+                'code' => 132001,
+                'message' => 'Template rejected: Bearer super-secret-token',
+                'error_data' => ['details' => 'access_token=another-secret-token'],
+            ],
+        ], 400)]);
+        $employee = $this->employee();
+        Sanctum::actingAs($employee);
+
+        $this->postJson('/api/attendance/check-in', $this->location())->assertCreated();
+
+        $error = (string) WhatsAppMessageLog::firstOrFail()->error_message;
+        $this->assertStringContainsString('HTTP 400', $error);
+        $this->assertStringContainsString('Meta code 132001', $error);
+        $this->assertStringContainsString('Meta message Template rejected: Bearer [redacted]', $error);
+        $this->assertStringContainsString('Details access_token [redacted]', $error);
+        $this->assertStringNotContainsString('super-secret-token', $error);
+        $this->assertStringNotContainsString('another-secret-token', $error);
     }
 
     public function test_provider_error_text_is_sanitized_before_it_is_stored(): void

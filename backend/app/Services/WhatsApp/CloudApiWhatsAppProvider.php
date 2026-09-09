@@ -4,6 +4,7 @@ namespace App\Services\WhatsApp;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Client\Response;
 use RuntimeException;
 
 class CloudApiWhatsAppProvider implements WhatsAppProvider
@@ -66,7 +67,7 @@ class CloudApiWhatsAppProvider implements WhatsAppProvider
         }
 
         if ($response->status() !== 429 && $response->status() >= 400 && $response->status() < 500) {
-            throw new WhatsAppPermanentException('WhatsApp provider rejected the message.');
+            throw new WhatsAppPermanentException($this->providerRejectionMessage($response));
         }
 
         throw new RuntimeException('WhatsApp provider is temporarily unavailable.');
@@ -79,6 +80,38 @@ class CloudApiWhatsAppProvider implements WhatsAppProvider
         $version = trim((string) config('whatsapp.graph_api_version'), '/');
 
         return "{$base}/{$version}/{$phoneNumberId}/{$resource}";
+    }
+
+    private function providerRejectionMessage(Response $response): string
+    {
+        $error = $response->json('error');
+        $parts = ["HTTP {$response->status()}"];
+
+        if (is_array($error)) {
+            if (isset($error['code']) && is_scalar($error['code'])) {
+                $parts[] = 'Meta code '.$this->diagnosticValue($error['code']);
+            }
+            if ($message = $this->diagnosticValue($error['message'] ?? null)) {
+                $parts[] = "Meta message {$message}";
+            }
+            if ($details = $this->diagnosticValue(data_get($error, 'error_data.details'))) {
+                $parts[] = "Details {$details}";
+            }
+        }
+
+        return 'WhatsApp provider rejected the message ('.implode('; ', $parts).').';
+    }
+
+    private function diagnosticValue(mixed $value): ?string
+    {
+        if (! is_scalar($value)) {
+            return null;
+        }
+
+        return str((string) $value)
+            ->replaceMatches('/\b(access[ _-]?token|authorization|bearer|token|secret|password)\b\s*[:=]?\s*\S+/i', '$1 [redacted]')
+            ->limit(120)
+            ->toString();
     }
 
     /** @return array<string,mixed> */
@@ -112,12 +145,18 @@ class CloudApiWhatsAppProvider implements WhatsAppProvider
         ];
     }
 
-    /** @param list<string|int|float> $values */
+    /** @param array<int|string, string|int|float> $values */
     private function parameters(array $values): array
     {
-        return array_map(fn (string|int|float $value): array => [
-            'type' => 'text',
-            'text' => (string) $value,
-        ], $values);
+        return array_map(function (string|int $name, string|int|float $value): array {
+            $parameter = [
+                'type' => 'text',
+                'text' => (string) $value,
+            ];
+            if (is_string($name)) {
+                $parameter['parameter_name'] = $name;
+            }
+            return $parameter;
+        }, array_keys($values), array_values($values));
     }
 }
