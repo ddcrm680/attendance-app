@@ -39,7 +39,7 @@ export default function AppBrand({
       ) : (
         <span
           aria-label={`${appBrand.name} logo`}
-          className={`flex ${markClassName} shrink-0 items-center justify-center rounded-lg bg-gray-900 font-semibold tracking-tight text-white ${
+          className={`flex ${markClassName} shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] font-semibold tracking-tight text-[var(--on-accent)] shadow-sm ${
             loginPresentation ? "text-base" : "text-[10px]"
           }`}
         >
@@ -51,13 +51,13 @@ export default function AppBrand({
           className={
             loginPresentation
               ? "whitespace-nowrap text-2xl font-semibold tracking-tight"
-              : "block truncate whitespace-nowrap text-sm font-semibold tracking-tight"
+              : "block truncate whitespace-nowrap text-sm font-bold tracking-tight"
           }
         >
           {appBrand.name}
         </span>
         {showWorkspaceLabel && (
-          <span className="mt-0.5 block text-[11px] font-medium leading-3 text-gray-500">
+          <span className="mt-0.5 block text-[11px] font-semibold uppercase tracking-[.08em] leading-3 text-gray-500">
             {appBrand.adminName}
           </span>
         )}

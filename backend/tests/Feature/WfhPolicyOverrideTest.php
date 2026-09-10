@@ -32,7 +32,7 @@ class WfhPolicyOverrideTest extends TestCase
             ->assertJsonValidationErrors('mode');
     }
 
-    public function test_employee_me_response_exposes_only_effective_wfh_availability(): void
+    public function test_employee_me_response_exposes_effective_wfh_requirements_without_policy_overrides(): void
     {
         [$employee] = $this->employee(['wfh_enabled' => false], [
             'wfh_enabled_override' => true,
@@ -42,6 +42,8 @@ class WfhPolicyOverrideTest extends TestCase
         $this->getJson('/api/me')
             ->assertOk()
             ->assertJsonPath('wfh_available', true)
+            ->assertJsonPath('wfh_gps_required', false)
+            ->assertJsonPath('wfh_photo_required', false)
             ->assertJsonMissingPath('wfh_enabled_override')
             ->assertJsonMissingPath('wfh_approval_required_override');
     }

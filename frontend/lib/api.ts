@@ -1,5 +1,48 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
+export type ApiFieldErrors = Record<string, string[]>;
+
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code?: string | number;
+  readonly error?: string;
+  readonly fieldErrors?: ApiFieldErrors;
+
+  constructor(
+    message: string,
+    options: {
+      status: number;
+      code?: string | number;
+      error?: string;
+      fieldErrors?: ApiFieldErrors;
+    },
+  ) {
+    super(message);
+    this.name = "ApiError";
+    this.status = options.status;
+    this.code = options.code;
+    this.error = options.error;
+    this.fieldErrors = options.fieldErrors;
+  }
+}
+
+function fieldErrors(data: unknown): ApiFieldErrors | undefined {
+  if (!data || typeof data !== "object" || !("errors" in data)) return undefined;
+  const errors = (data as { errors?: unknown }).errors;
+  if (!errors || typeof errors !== "object" || Array.isArray(errors)) return undefined;
+
+  return Object.fromEntries(
+    Object.entries(errors).flatMap(([field, messages]) => {
+      const normalized = Array.isArray(messages)
+        ? messages.filter((message): message is string => typeof message === "string")
+        : typeof messages === "string"
+          ? [messages]
+          : [];
+      return normalized.length ? [[field, normalized]] : [];
+    }),
+  );
+}
+
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("attendance_token");
@@ -34,8 +77,22 @@ export async function apiFetch<T>(
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    const message = data?.message ?? `Request failed (${res.status})`;
-    throw new Error(message);
+    const response = data as
+      | { message?: unknown; error?: unknown; code?: unknown }
+      | null;
+    const message =
+      typeof response?.message === "string"
+        ? response.message
+        : `Request failed (${res.status})`;
+    throw new ApiError(message, {
+      status: res.status,
+      code:
+        typeof response?.code === "string" || typeof response?.code === "number"
+          ? response.code
+          : undefined,
+      error: typeof response?.error === "string" ? response.error : undefined,
+      fieldErrors: fieldErrors(data),
+    });
   }
 
   return data as T;
@@ -61,6 +118,8 @@ export type Employee = {
   status: "active" | "inactive" | "suspended";
   wfh_eligible?: boolean;
   wfh_available?: boolean;
+  wfh_gps_required?: boolean;
+  wfh_photo_required?: boolean;
   wfh_enabled_override?: boolean | null;
   wfh_approval_required_override?: boolean | null;
 };
@@ -157,19 +216,20 @@ export function me() {
 }
 
 export function checkIn(payload: {
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  positionTimestamp: number;
-  photo: File;
+  latitude?: number;
+  longitude?: number;
+  accuracy?: number;
+  positionTimestamp?: number;
+  photo?: File;
   mode?: "office" | "wfh";
 }) {
   const body = new FormData();
-  body.append("latitude", String(payload.latitude));
-  body.append("longitude", String(payload.longitude));
-  body.append("accuracy", String(payload.accuracy));
-  body.append("position_timestamp", String(payload.positionTimestamp));
-  body.append("photo", payload.photo);
+  if (payload.latitude !== undefined) body.append("latitude", String(payload.latitude));
+  if (payload.longitude !== undefined) body.append("longitude", String(payload.longitude));
+  if (payload.accuracy !== undefined) body.append("accuracy", String(payload.accuracy));
+  if (payload.positionTimestamp !== undefined)
+    body.append("position_timestamp", String(payload.positionTimestamp));
+  if (payload.photo) body.append("photo", payload.photo);
   body.append("mode", payload.mode ?? "office");
   return apiFetch<{ message: string; attendance: Attendance }>(
     "/attendance/check-in",
@@ -181,18 +241,19 @@ export function checkIn(payload: {
 }
 
 export function checkOut(payload: {
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  positionTimestamp: number;
-  photo: File;
+  latitude?: number;
+  longitude?: number;
+  accuracy?: number;
+  positionTimestamp?: number;
+  photo?: File;
 }) {
   const body = new FormData();
-  body.append("latitude", String(payload.latitude));
-  body.append("longitude", String(payload.longitude));
-  body.append("accuracy", String(payload.accuracy));
-  body.append("position_timestamp", String(payload.positionTimestamp));
-  body.append("photo", payload.photo);
+  if (payload.latitude !== undefined) body.append("latitude", String(payload.latitude));
+  if (payload.longitude !== undefined) body.append("longitude", String(payload.longitude));
+  if (payload.accuracy !== undefined) body.append("accuracy", String(payload.accuracy));
+  if (payload.positionTimestamp !== undefined)
+    body.append("position_timestamp", String(payload.positionTimestamp));
+  if (payload.photo) body.append("photo", payload.photo);
   return apiFetch<{ message: string; attendance: Attendance }>(
     "/attendance/check-out",
     {

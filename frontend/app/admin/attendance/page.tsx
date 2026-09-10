@@ -138,7 +138,7 @@ export default function AdminAttendance() {
         descriptionClassName="text-slate-600"
       />
 
-      <div className="grid gap-2 rounded border border-slate-200 bg-slate-50 p-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="app-card grid gap-3 p-3 sm:grid-cols-2 sm:p-4 xl:grid-cols-4">
         <label className="grid gap-1 text-sm text-slate-700">
           From
           <input
@@ -287,7 +287,7 @@ export default function AdminAttendance() {
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded border border-slate-200 bg-white">
+      <div className="app-table-wrap">
         <table className="w-full min-w-[800px] text-sm md:min-w-[560px]">
           <thead className="bg-slate-50 text-left text-slate-700">
             <tr>

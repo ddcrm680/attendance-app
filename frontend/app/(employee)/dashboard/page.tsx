@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  ApiError,
   checkIn,
   checkOut,
   me,
@@ -31,6 +32,7 @@ export default function DashboardPage() {
     "check-in" | "check-out" | null
   >(null);
   const [trackingInterval, setTrackingInterval] = useState(60);
+  const [trackingEnabled, setTrackingEnabled] = useState(false);
   const [online, setOnline] = useState(true);
   const [currentUser, setCurrentUser] = useState<Employee | null>(null);
   const [mode, setMode] = useState<"office" | "wfh">("office");
@@ -56,29 +58,39 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (!attendance?.check_in || attendance.check_out) return;
+    if (!attendance?.check_in || attendance.check_out) {
+      setTrackingEnabled(false);
+      return;
+    }
     trackingStatus()
       .then((status) => {
+        setTrackingEnabled(status.active);
         if (status.active && status.tracking_interval_seconds)
           setTrackingInterval(status.tracking_interval_seconds);
       })
-      .catch(() => {});
+      .catch(() => setTrackingEnabled(false));
   }, [attendance]);
 
   const tracking = useLiveLocationTracking({
-    enabled: Boolean(
-      attendance?.id && attendance.check_in && !attendance.check_out,
-    ),
+    enabled: Boolean(trackingEnabled && attendance?.id && attendance.check_in && !attendance.check_out),
     intervalSeconds: trackingInterval,
     onPosition: async (position) => {
       if (!attendance?.id) return;
-      await updateLocation({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy,
-        positionTimestamp: position.timestamp,
-        attendanceId: attendance.id,
-      });
+      try {
+        await updateLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          positionTimestamp: position.timestamp,
+          attendanceId: attendance.id,
+        });
+      } catch (error) {
+        if (error instanceof ApiError && [403, 409].includes(error.status)) {
+          const status = await trackingStatus().catch(() => null);
+          setTrackingEnabled(Boolean(status?.active));
+        }
+        throw error;
+      }
     },
   });
 
@@ -108,7 +120,17 @@ export default function DashboardPage() {
     });
   }
 
-  async function submitPunch(action: "check-in" | "check-out", photo: File) {
+  function requirementsFor(action: "check-in" | "check-out") {
+    const modeForAction = action === "check-in" ? mode : attendance?.mode;
+    const isWfh = modeForAction === "wfh";
+
+    return {
+      photo: !isWfh || currentUser?.wfh_photo_required !== false,
+      location: !isWfh || currentUser?.wfh_gps_required !== false,
+    };
+  }
+
+  async function submitPunch(action: "check-in" | "check-out", photo?: File) {
     if (!navigator.onLine)
       throw new Error(
         "You are offline. Reconnect before submitting attendance; this punch has not been saved.",
@@ -116,23 +138,23 @@ export default function DashboardPage() {
     setMessage(null);
     setBusy(true);
     try {
-      const pos = await getPosition();
-      const { latitude, longitude, accuracy } = pos.coords;
+      const requirements = requirementsFor(action);
+      const pos = requirements.location ? await getPosition() : undefined;
       const res =
         action === "check-in"
           ? await checkIn({
-              latitude,
-              longitude,
-              accuracy,
-              positionTimestamp: pos.timestamp,
+              latitude: pos?.coords.latitude,
+              longitude: pos?.coords.longitude,
+              accuracy: pos?.coords.accuracy,
+              positionTimestamp: pos?.timestamp,
               photo,
               mode,
             })
           : await checkOut({
-              latitude,
-              longitude,
-              accuracy,
-              positionTimestamp: pos.timestamp,
+              latitude: pos?.coords.latitude,
+              longitude: pos?.coords.longitude,
+              accuracy: pos?.coords.accuracy,
+              positionTimestamp: pos?.timestamp,
               photo,
             });
       setAttendance(res.attendance);
@@ -153,10 +175,20 @@ export default function DashboardPage() {
   const hasCheckedIn = !!attendance?.check_in;
   const hasCheckedOut = !!attendance?.check_out;
 
+  function startPunch(action: "check-in" | "check-out") {
+    setMessage(null);
+    if (requirementsFor(action).photo) {
+      setSelfieAction(action);
+      return;
+    }
+    void submitPunch(action);
+  }
+
   return (
-    <div className="attendance-page space-y-3">
+    <div className="attendance-page app-page">
       <section className="attendance-panel attendance-header px-4 py-4 sm:px-5">
-        <h1 className="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+        <p className="app-eyebrow mb-2">Employee workspace</p>
+        <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
           Daily attendance
         </h1>
         <p className="mt-1 text-sm text-gray-600">
@@ -206,7 +238,7 @@ export default function DashboardPage() {
 
       {attendance?.check_in && !attendance.check_out && (
         <div
-          className={`rounded-xl border p-3 text-sm ${tracking.state === "active" ? "border-green-200 bg-green-50 text-green-800" : tracking.state === "degraded" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-gray-200 bg-white text-gray-700"}`}
+          className={`app-feedback text-sm ${tracking.state === "active" ? "app-feedback-success" : tracking.state === "degraded" ? "border-amber-200 bg-amber-50 text-amber-800" : "app-surface text-gray-700"}`}
         >
           <p className="font-medium">
             {tracking.state === "active"
@@ -227,7 +259,7 @@ export default function DashboardPage() {
       {!online && (
         <p
           role="alert"
-          className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+          className="app-feedback border-amber-200 bg-amber-50 text-amber-800"
         >
           Reconnect before punching in or out. Attendance is not stored for
           delayed submission.
@@ -237,8 +269,7 @@ export default function DashboardPage() {
       <div className="attendance-actions grid gap-2.5 sm:grid-cols-2">
         <button
           onClick={() => {
-            setMessage(null);
-            setSelfieAction("check-in");
+            startPunch("check-in");
           }}
           disabled={busy || hasCheckedIn || !online}
           className="attendance-action attendance-action-primary attendance-punch-primary w-full rounded-xl py-3 text-base font-semibold text-white disabled:opacity-40"
@@ -248,8 +279,7 @@ export default function DashboardPage() {
 
         <button
           onClick={() => {
-            setMessage(null);
-            setSelfieAction("check-out");
+            startPunch("check-out");
           }}
           disabled={busy || !hasCheckedIn || hasCheckedOut || !online}
           className="attendance-action attendance-action-secondary attendance-punch-secondary w-full rounded-xl py-3 text-base font-semibold text-gray-900 disabled:opacity-40"

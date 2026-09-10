@@ -125,17 +125,17 @@ export default function SelfieCapture({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/70 sm:items-center sm:justify-center">
+    <div className="fixed inset-0 z-50 flex items-end bg-slate-950/70 p-0 sm:items-center sm:justify-center sm:p-6">
       <section
-        className="app-surface w-full max-w-lg rounded-t-2xl p-4 sm:rounded-2xl"
+        className="app-surface w-full max-w-lg rounded-t-[1.5rem] border border-[var(--line)] p-4 shadow-2xl sm:rounded-[1.5rem] sm:p-6"
         aria-label={`${title} selfie camera`}
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">{title}: take a fresh selfie</h2>
+          <div><p className="app-eyebrow mb-1">Verified attendance</p><h2 className="font-semibold">{title}: take a fresh selfie</h2></div>
           <button
             onClick={cancel}
             disabled={submitting}
-            className="text-sm underline"
+            className="app-secondary-action min-h-9 px-3 text-sm"
           >
             Cancel
           </button>
@@ -143,7 +143,7 @@ export default function SelfieCapture({
         {error && (
           <p
             role="alert"
-            className="mb-3 rounded bg-red-50 p-3 text-sm text-red-700"
+            className="app-feedback app-feedback-error mb-3"
           >
             {error}
           </p>

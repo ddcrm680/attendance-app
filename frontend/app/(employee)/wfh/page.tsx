@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  ApiError,
   createWfhRequest,
   me,
   myWfhRequests,
@@ -11,6 +12,21 @@ import {
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 
+function localDateInputValue(date = new Date()): string {
+  const parts = new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .formatToParts(date)
+    .reduce<Record<string, string>>((result, part) => {
+      if (part.type !== "literal") result[part.type] = part.value;
+      return result;
+    }, {});
+
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 export default function WfhPage() {
   const [user, setUser] = useState<Employee | null>(null);
   const [requests, setRequests] = useState<WfhRequest[]>([]);
@@ -18,10 +34,12 @@ export default function WfhPage() {
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
   const [loading, setLoading] = useState(true);
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
+    setFieldErrors(null);
     Promise.all([me(), myWfhRequests()])
       .then(([employee, response]) => {
         setUser(employee);
@@ -39,6 +57,7 @@ export default function WfhPage() {
     event.preventDefault();
     setMessage(null);
     setError(null);
+    setFieldErrors(null);
     try {
       await createWfhRequest({
         attendance_date: date,
@@ -49,6 +68,7 @@ export default function WfhPage() {
       setReason("");
       load();
     } catch (e) {
+      if (e instanceof ApiError) setFieldErrors(e.fieldErrors ?? null);
       setError(
         e instanceof Error ? e.message : "Unable to submit WFH request.",
       );
@@ -81,11 +101,16 @@ export default function WfhPage() {
             <input
               required
               type="date"
-              min={new Date().toISOString().slice(0, 10)}
+              min={localDateInputValue()}
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className="mt-1 w-full rounded border p-2"
             />
+            {fieldErrors?.attendance_date?.[0] && (
+              <span className="mt-1 block text-xs text-red-700">
+                {fieldErrors.attendance_date[0]}
+              </span>
+            )}
           </label>
           <label className="block text-sm">
             Reason (optional)
@@ -94,6 +119,11 @@ export default function WfhPage() {
               onChange={(e) => setReason(e.target.value)}
               className="mt-1 w-full rounded border p-2"
             />
+            {fieldErrors?.reason?.[0] && (
+              <span className="mt-1 block text-xs text-red-700">
+                {fieldErrors.reason[0]}
+              </span>
+            )}
           </label>
           <button className="app-primary-action w-full rounded py-2 text-sm">
             Request WFH

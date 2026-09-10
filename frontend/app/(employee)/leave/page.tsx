@@ -57,19 +57,19 @@ export default function LeavePage() {
     }
   }
   return (
-    <div className="space-y-5">
+    <div className="app-page">
       <PageHeader
         title="Leave"
         description="Submit and track your leave requests."
       />
       <form
         onSubmit={submit}
-        className="app-card space-y-3 p-4"
+        className="app-card space-y-3 p-4 sm:p-5"
       >
         <select
           value={type}
           onChange={(e) => setType(e.target.value)}
-          className="w-full rounded border p-2"
+          className="app-form-select"
         >
           {types.map((t) => (
             <option key={t.id} value={t.id}>
@@ -82,22 +82,22 @@ export default function LeavePage() {
           type="date"
           value={start}
           onChange={(e) => setStart(e.target.value)}
-          className="w-full rounded border p-2"
+          className="app-form-control"
         />
         <input
           required
           type="date"
           value={end}
           onChange={(e) => setEnd(e.target.value)}
-          className="w-full rounded border p-2"
+          className="app-form-control"
         />
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Reason (if applicable)"
-          className="w-full rounded border p-2"
+          className="app-form-control min-h-28"
         />
-        <button className="app-primary-action w-full rounded py-2">
+        <button className="app-primary-action w-full">
           Submit request
         </button>
       </form>
@@ -113,7 +113,7 @@ export default function LeavePage() {
       )}
       <div className="space-y-2">
         {leaves.map((l) => (
-          <div key={l.id} className="rounded-xl border p-3 text-sm">
+          <div key={l.id} className="app-card p-3 text-sm sm:p-4">
             <p className="flex items-center gap-1 font-medium">
               <span>{l.leave_type?.name} ·</span>
               <StatusBadge status={l.status} />

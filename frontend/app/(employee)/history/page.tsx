@@ -37,12 +37,12 @@ export default function HistoryPage() {
     load();
   }, [load]);
   return (
-    <div className="space-y-4">
+    <div className="app-page">
       <PageHeader
         title="Attendance history"
         description="Your verified attendance records."
       />
-      <div className="grid grid-cols-2 gap-2">
+      <div className="app-card grid grid-cols-2 gap-3 p-3 sm:p-4">
         <label className="text-xs">
           From
           <input
@@ -52,7 +52,7 @@ export default function HistoryPage() {
               setFrom(e.target.value);
               setPage(1);
             }}
-            className="mt-1 w-full rounded border p-2"
+            className="app-form-control mt-1"
           />
         </label>
         <label className="text-xs">
@@ -64,13 +64,13 @@ export default function HistoryPage() {
               setTo(e.target.value);
               setPage(1);
             }}
-            className="mt-1 w-full rounded border p-2"
+            className="app-form-control mt-1"
           />
         </label>
       </div>
       {loading && <p className="text-sm text-gray-500">Loading attendance…</p>}
       {error && (
-        <div className="rounded bg-red-50 p-3 text-sm text-red-700">
+        <div className="app-feedback app-feedback-error">
           {error}
           <button onClick={load} className="ml-2 underline">
             Retry
@@ -78,7 +78,7 @@ export default function HistoryPage() {
         </div>
       )}
       {!loading && !error && !records.length && (
-        <p className="rounded border border-dashed p-5 text-sm text-gray-500">
+        <p className="app-empty-state text-sm">
           No attendance records for this period.
         </p>
       )}
@@ -87,7 +87,7 @@ export default function HistoryPage() {
           <Link
             href={`/history/${r.id}`}
             key={r.id}
-            className="app-card block p-4"
+            className="app-card block p-4 transition-transform hover:-translate-y-0.5 hover:shadow-md"
           >
             <div className="flex justify-between">
               <b>{formatDate(r.attendance_date)}</b>

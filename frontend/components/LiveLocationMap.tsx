@@ -10,7 +10,7 @@ export default function LiveLocationMap({
   const points = employees.filter((employee) => employee.last_location);
   if (!points.length)
     return (
-      <div className="rounded-xl border border-dashed p-6 text-sm text-gray-500">
+      <div className="app-empty-state text-sm">
         Working employees have not sent a verified location yet.
       </div>
     );
@@ -24,13 +24,13 @@ export default function LiveLocationMap({
   const y = (lat: number) =>
     94 - ((lat - minLat) / (maxLat - minLat || 1)) * 88;
   return (
-    <div className="overflow-hidden rounded-xl border bg-slate-50 p-3">
+    <div className="app-card overflow-hidden p-3 sm:p-4">
       <p className="mb-2 text-xs text-gray-500">
         Verified current positions — coordinate view, refreshed periodically
       </p>
       <svg
         viewBox="0 0 100 100"
-        className="aspect-video w-full rounded-lg bg-slate-100"
+        className="aspect-video w-full rounded-xl bg-slate-100"
         aria-label="Live employee location map"
       >
         {points.map((employee) => (

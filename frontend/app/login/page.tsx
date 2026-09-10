@@ -38,13 +38,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,var(--accent-soft),transparent_45%)] px-4 py-8">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+        className="app-card w-full max-w-md p-5 sm:p-7"
       >
         <AppBrand variant="login" className="mb-6" />
-        <h1 className="mb-1 text-xl font-medium">Sign in</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight">Sign in</h1>
         <p className="mb-6 text-sm text-gray-500">
           Attendance and live location tracking
         </p>
@@ -53,7 +53,7 @@ export default function LoginPage() {
           Email or mobile
         </label>
         <input
-          className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
+          className="app-form-control mb-4"
           type="text"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
@@ -62,19 +62,19 @@ export default function LoginPage() {
 
         <label className="mb-1 block text-sm text-gray-600">Password</label>
         <input
-          className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none"
+          className="app-form-control mb-4"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="********"
         />
 
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="app-feedback app-feedback-error mb-4">{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="app-primary-action w-full rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="app-primary-action w-full disabled:opacity-50"
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>

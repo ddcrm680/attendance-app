@@ -54,7 +54,10 @@ class AuthController extends Controller
     private function withWfhAvailability(Employee $employee): Employee
     {
         $employee->load(['department', 'office']);
-        $employee->setAttribute('wfh_available', $this->settings->wfhAvailableFor($employee));
+        $policy = $this->settings->wfhFor($employee);
+        $employee->setAttribute('wfh_available', $employee->wfh_eligible && $policy->enabled);
+        $employee->setAttribute('wfh_gps_required', $policy->gpsRequired);
+        $employee->setAttribute('wfh_photo_required', $policy->photoRequired);
         $employee->makeHidden(['wfh_enabled_override', 'wfh_approval_required_override']);
 
         return $employee;

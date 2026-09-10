@@ -34,9 +34,9 @@ export default function AdminDashboardPage() {
   if (!stats) return <p className="text-sm text-gray-500">Loading…</p>;
 
   return (
-    <div>
-      <PageHeader title={`Today — ${stats.date}`} className="mb-4" />
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+    <div className="app-page">
+      <PageHeader eyebrow="Operations overview" title={`Today — ${stats.date}`} />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <StatCard label="Total employees" value={stats.total_employees} />
         <StatCard label="Present today" value={stats.present_today} />
         <StatCard label="Absent today" value={stats.absent_today} />
@@ -49,9 +49,9 @@ export default function AdminDashboardPage() {
           value={formatDuration(stats.average_working_minutes)}
         />
       </div>
-      <section className="mt-6 grid gap-4 md:grid-cols-2">
-        <div className="app-card p-4">
-          <h2 className="mb-3 font-medium">Daily attendance (30 days)</h2>
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="app-card p-4 sm:p-5">
+          <p className="app-eyebrow mb-2">Trend</p><h2 className="mb-4 font-semibold">Daily attendance (30 days)</h2>
           {charts?.daily.length ? (
             <div className="space-y-1">
               {charts.daily.slice(-10).map((d) => (
@@ -71,8 +71,8 @@ export default function AdminDashboardPage() {
             <p className="text-sm text-gray-500">No attendance data yet.</p>
           )}
         </div>
-        <div className="app-card p-4">
-          <h2 className="mb-3 font-medium">Department attendance</h2>
+        <div className="app-card p-4 sm:p-5">
+          <p className="app-eyebrow mb-2">Team view</p><h2 className="mb-4 font-semibold">Department attendance</h2>
           {charts?.departments.length ? (
             <div className="space-y-2">
               {charts.departments.map((d) => (

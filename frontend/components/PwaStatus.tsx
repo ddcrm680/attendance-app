@@ -20,7 +20,7 @@ export default function PwaStatus() {
   return online ? null : (
     <div
       role="status"
-      className="fixed inset-x-0 top-0 z-[60] bg-amber-500 px-3 py-2 text-center text-sm font-medium text-amber-950"
+      className="fixed inset-x-3 top-3 z-[60] rounded-xl border border-[color-mix(in_srgb,var(--warning)_35%,var(--line))] bg-[var(--warning-soft)] px-3 py-2 text-center text-sm font-semibold text-[var(--warning)] shadow-lg sm:inset-x-auto sm:right-4 sm:max-w-md"
     >
       You’re offline. Attendance cannot be submitted until you reconnect; no
       punch has been saved.
