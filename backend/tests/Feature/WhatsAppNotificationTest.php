@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\SendWhatsAppMessage;
 use App\Models\Attendance;
+use App\Models\AttendanceSetting;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Office;
@@ -46,6 +47,47 @@ class WhatsAppNotificationTest extends TestCase
         $this->postJson('/api/attendance/check-in', $this->location())->assertCreated();
         $this->assertDatabaseHas('whatsapp_message_logs', ['notification_type' => 'punch_in', 'status' => 'queued']);
         Queue::assertPushed(SendWhatsAppMessage::class);
+    }
+
+    public function test_late_wfh_check_in_keeps_wfh_status_and_queues_late_notification(): void
+    {
+        Queue::fake();
+        $employee = $this->employee();
+        $employee->update(['wfh_eligible' => true]);
+        AttendanceSetting::create([
+            'office_id' => $employee->office_id,
+            'office_start_time' => '09:00:00',
+            'grace_period_minutes' => 15,
+            'wfh_enabled' => true,
+            'wfh_gps_required' => false,
+            'wfh_photo_required' => false,
+            'wfh_approval_required' => false,
+            'wfh_tracking_enabled' => false,
+        ]);
+        Carbon::setTestNow(Carbon::parse('2026-04-06 10:00:00', config('app.timezone')));
+        Sanctum::actingAs($employee);
+
+        try {
+            $this->postJson('/api/attendance/check-in', ['mode' => 'wfh'])
+                ->assertCreated()
+                ->assertJsonPath('attendance.status', 'work_from_home');
+
+            $attendance = Attendance::firstOrFail();
+            $this->assertSame('work_from_home', $attendance->status);
+            $this->assertGreaterThan(0, $attendance->late_minutes);
+            $this->assertDatabaseHas('whatsapp_message_logs', [
+                'attendance_id' => $attendance->id,
+                'notification_type' => 'punch_in',
+                'status' => 'queued',
+            ]);
+            $this->assertDatabaseHas('whatsapp_message_logs', [
+                'attendance_id' => $attendance->id,
+                'notification_type' => 'late',
+                'status' => 'queued',
+            ]);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_duplicate_event_uses_a_single_idempotent_log(): void
@@ -116,7 +158,7 @@ class WhatsAppNotificationTest extends TestCase
         ], $template?->bodyParameters);
         $this->assertSame([], $template?->headerParameters);
         $this->assertSame([], $template?->buttonParameters);
-        $this->assertNull(app(WhatsAppNotificationService::class)->activeTemplateFor($log));
+        $this->assertSame('attendance_punch_out', app(WhatsAppNotificationService::class)->activeTemplateFor($log)?->name);
     }
 
     public function test_late_template_candidate_formats_late_minutes_as_integer_text(): void
@@ -145,7 +187,7 @@ class WhatsAppNotificationTest extends TestCase
         ], $template?->bodyParameters);
         $this->assertSame([], $template?->headerParameters);
         $this->assertSame([], $template?->buttonParameters);
-        $this->assertNull(app(WhatsAppNotificationService::class)->activeTemplateFor($log));
+        $this->assertSame('attendance_late', app(WhatsAppNotificationService::class)->activeTemplateFor($log)?->name);
     }
 
     public function test_daily_summary_template_candidate_uses_existing_human_readable_average(): void
@@ -180,10 +222,10 @@ class WhatsAppNotificationTest extends TestCase
         ], $template?->bodyParameters);
         $this->assertSame([], $template?->headerParameters);
         $this->assertSame([], $template?->buttonParameters);
-        $this->assertNull(app(WhatsAppNotificationService::class)->activeTemplateFor($log));
+        $this->assertSame('attendance_daily_summary', app(WhatsAppNotificationService::class)->activeTemplateFor($log)?->name);
     }
 
-    public function test_punch_in_job_uses_template_without_photo_and_non_punch_in_remains_plain_text(): void
+    public function test_active_attendance_jobs_use_templates_without_photos(): void
     {
         $attendance = $this->attendance($this->employee());
         $attendance->update([
@@ -205,7 +247,7 @@ class WhatsAppNotificationTest extends TestCase
             'recipient' => '+919000000000',
             'provider' => 'cloud',
             'status' => 'queued',
-            'idempotency_key' => 'punch-out-job-plain-text-test',
+            'idempotency_key' => 'punch-out-job-template-test',
         ]);
         $capture = (object) ['calls' => []];
         $provider = new class($capture) implements WhatsAppProvider {
@@ -222,8 +264,8 @@ class WhatsAppNotificationTest extends TestCase
 
         $this->assertSame('attendance_punch_in', $capture->calls[0]['template']->name);
         $this->assertNull($capture->calls[0]['photoPath']);
-        $this->assertNull($capture->calls[1]['template']);
-        $this->assertStringStartsWith('Punch out:', $capture->calls[1]['body']);
+        $this->assertSame('attendance_punch_out', $capture->calls[1]['template']->name);
+        $this->assertNull($capture->calls[1]['photoPath']);
     }
 
     public function test_temporary_delivery_failure_does_not_change_attendance(): void

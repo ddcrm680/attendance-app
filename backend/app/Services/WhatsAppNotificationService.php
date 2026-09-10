@@ -17,7 +17,12 @@ class WhatsAppNotificationService
      * Only templates verified as Active in Meta may be delivered as templates.
      * Pending templates continue through the existing plain-text path.
      */
-    private const ACTIVE_TEMPLATE_NAMES = ['attendance_punch_in'];
+    private const ACTIVE_TEMPLATE_NAMES = [
+        'attendance_punch_in',
+        'attendance_punch_out',
+        'attendance_late',
+        'attendance_daily_summary',
+    ];
 
     public function queueAttendance(Attendance $attendance, string $type): ?WhatsAppMessageLog
     {

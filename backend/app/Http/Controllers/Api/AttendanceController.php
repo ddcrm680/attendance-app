@@ -77,7 +77,7 @@ class AttendanceController extends Controller
             throw $exception;
         }
         $this->whatsApp->queueAttendance($record, 'punch_in');
-        if ($record->status === 'late') {
+        if ($record->late_minutes > 0) {
             $this->whatsApp->queueAttendance($record, 'late');
         }
         return response()->json(['message' => 'Attendance marked successfully', 'attendance' => $record], 201);
