@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Exceptions\ConcurrentWriteException;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use App\Services\AtomicWriteService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class LeaveController extends Controller
 {
+    public function __construct(private AtomicWriteService $writes) {}
+
     public function types()
     {
         return response()->json(
@@ -48,23 +52,31 @@ class LeaveController extends Controller
             ]);
         }
 
-        $overlap = LeaveRequest::where('employee_id', $request->user()->id)
-            ->whereIn('status', ['pending', 'approved'])
-            ->where('start_date', '<=', $data['end_date'])
-            ->where('end_date', '>=', $data['start_date'])
-            ->exists();
+        try {
+            $leave = $this->writes->run(function () use ($request, $data) {
+                $overlap = LeaveRequest::where('employee_id', $request->user()->id)
+                    ->whereIn('status', ['pending', 'approved'])
+                    ->where('start_date', '<=', $data['end_date'])
+                    ->where('end_date', '>=', $data['start_date'])
+                    ->exists();
 
-        if ($overlap) {
+                if ($overlap) {
+                    return null;
+                }
+
+                return LeaveRequest::create($data + ['employee_id' => $request->user()->id]);
+            });
+        } catch (ConcurrentWriteException) {
+            $leave = null;
+        }
+
+        if (! $leave) {
             throw ValidationException::withMessages([
                 'dates' => ['This leave overlaps an existing request.'],
             ]);
         }
 
-        return response()->json(
-            LeaveRequest::create($data + ['employee_id' => $request->user()->id])
-                ->load('leaveType'),
-            201
-        );
+        return response()->json($leave->load('leaveType'), 201);
     }
 
     public function cancel(Request $request, LeaveRequest $leave)

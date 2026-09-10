@@ -4,17 +4,20 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LocationUpdateRequest;
+use App\Exceptions\ConcurrentWriteException;
 use App\Models\Attendance;
 use App\Models\LocationLog;
 use Illuminate\Http\Request;
 use App\Services\VerifiedLocationService;
 use App\Services\AttendanceSettingsResolver;
+use App\Services\AtomicWriteService;
 
 class LocationController extends Controller
 {
     public function __construct(
         private VerifiedLocationService $locations,
         private AttendanceSettingsResolver $settings,
+        private AtomicWriteService $writes,
     ) {}
 
     public function update(LocationUpdateRequest $request)
@@ -52,28 +55,52 @@ class LocationController extends Controller
                 'message' => 'The attendance office is no longer available. Contact HR.',
             ], 422);
         }
-        $interval = $this->trackingInterval($attendance);
-        $lastLog = LocationLog::where('attendance_id', $attendance->id)
-            ->orderByDesc('recorded_at')
-            ->orderByDesc('id')
-            ->first();
-        if ($lastLog && $lastLog->recorded_at->greaterThan(now()->subSeconds($interval))) {
+        try {
+            $result = $this->writes->run(function () use ($attendance, $employee, $data) {
+                $attendance = Attendance::whereKey($attendance->id)->lockForUpdate()->first();
+                if (! $attendance || $attendance->check_out) {
+                    return null;
+                }
+
+                $interval = $this->trackingInterval($attendance);
+                $lastLog = LocationLog::where('attendance_id', $attendance->id)
+                    ->orderByDesc('recorded_at')
+                    ->orderByDesc('id')
+                    ->first();
+                if ($lastLog && $lastLog->recorded_at->greaterThan(now()->subSeconds($interval))) {
+                    return ['interval' => $interval];
+                }
+
+                $location = $this->locations->verify($attendance->office, $data);
+                $log = LocationLog::create([
+                    'employee_id' => $employee->id,
+                    'attendance_id' => $attendance->id,
+                    'latitude' => $location['latitude'],
+                    'longitude' => $location['longitude'],
+                    'accuracy' => $location['accuracy'],
+                    'recorded_at' => now(),
+                ]);
+
+                return ['interval' => $interval, 'log' => $log];
+            });
+        } catch (ConcurrentWriteException) {
+            $result = ['interval' => $this->trackingInterval($attendance)];
+        }
+
+        if ($result === null) {
+            return response()->json([
+                'message' => 'No active check-in session. Location tracking only runs between check-in and check-out.',
+            ], 409);
+        }
+
+        if (! isset($result['log'])) {
             return response()->json([
                 'message' => 'Location update is already current.',
-                'tracking_interval_seconds' => $interval,
+                'tracking_interval_seconds' => $result['interval'],
             ], 202);
         }
-        $location = $this->locations->verify($attendance->office, $data);
-        $log = LocationLog::create([
-            'employee_id' => $employee->id,
-            'attendance_id' => $attendance->id,
-            'latitude' => $location['latitude'],
-            'longitude' => $location['longitude'],
-            'accuracy' => $location['accuracy'],
-            'recorded_at' => now(),
-        ]);
 
-        return response()->json(['location' => $log, 'tracking_interval_seconds' => $interval], 201);
+        return response()->json(['location' => $result['log'], 'tracking_interval_seconds' => $result['interval']], 201);
     }
 
     public function current(Request $request)

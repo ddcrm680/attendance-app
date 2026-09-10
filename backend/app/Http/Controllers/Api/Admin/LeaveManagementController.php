@@ -3,14 +3,16 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Exceptions\ConcurrentWriteException;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use App\Services\AtomicWriteService;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
 
 class LeaveManagementController extends Controller
 {
-    public function __construct(private AuditService $audit) {}
+    public function __construct(private AuditService $audit, private AtomicWriteService $writes) {}
 
     public function index()
     {
@@ -27,21 +29,37 @@ class LeaveManagementController extends Controller
             'status' => ['required', 'in:approved,rejected'],
         ]);
 
-        if ($leave->status !== 'pending') {
+        try {
+            $reviewed = $this->writes->run(function () use ($leave, $data, $request) {
+                $updated = LeaveRequest::whereKey($leave->id)
+                    ->where('status', 'pending')
+                    ->update($data + [
+                        'reviewed_by' => $request->user()->id,
+                        'reviewed_at' => now(),
+                    ]);
+
+                if (! $updated) {
+                    return null;
+                }
+
+                $reviewed = LeaveRequest::findOrFail($leave->id);
+                $this->audit->record($request, 'leave_request.'.$reviewed->status, $reviewed, [
+                    'employee_id' => $reviewed->employee_id,
+                ]);
+
+                return $reviewed;
+            });
+        } catch (ConcurrentWriteException) {
+            $reviewed = null;
+        }
+
+        if (! $reviewed) {
             return response()->json([
                 'message' => 'This leave request has already been reviewed.',
             ], 409);
         }
 
-        $leave->update($data + [
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-        ]);
-        $this->audit->record($request, 'leave_request.'.$leave->status, $leave, [
-            'employee_id' => $leave->employee_id,
-        ]);
-
-        return response()->json($leave);
+        return response()->json($reviewed);
     }
 
     public function types()
