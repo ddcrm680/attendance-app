@@ -49,8 +49,10 @@ export default function AdminLayout({
     },
     { href: "/admin/offices", label: "Offices", icon: "offices" as const },
     { href: "/admin/leave", label: "Leave", icon: "leave" as const },
+    { href: "/admin/leave-types", label: "Leave types", icon: "leave" as const },
     { href: "/admin/holidays", label: "Holidays", icon: "calendar" as const },
     { href: "/admin/wfh", label: "WFH requests", icon: "wfh" as const },
+    { href: "/admin/settings", label: "Settings", icon: "settings" as const },
     { href: "/admin/live-locations", label: "Live map", icon: "live" as const },
     {
       href: "/admin/attendance",
@@ -61,8 +63,8 @@ export default function AdminLayout({
     { href: "/admin/audit", label: "Audit log", icon: "audit" as const },
   ];
   const primaryLinks = links.slice(0, 4);
-  const managementLinks = links.slice(4, 10);
-  const operationsLinks = links.slice(10);
+  const managementLinks = links.slice(4, 12);
+  const operationsLinks = links.slice(12);
   const renderLink = (link: (typeof links)[number]) => (
     <Link
       key={link.href}

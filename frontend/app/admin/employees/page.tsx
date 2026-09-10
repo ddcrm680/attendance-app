@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   adminDepartments,
   adminEmployees,
@@ -15,6 +15,7 @@ import {
   type Office,
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
+import PaginationControls from "@/components/PaginationControls";
 
 const blankForm = {
   employee_code: "",
@@ -42,6 +43,8 @@ function overrideSelection(value: boolean | null | undefined): WfhOverrideValue 
 
 export default function AdminEmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -55,20 +58,22 @@ export default function AdminEmployeesPage() {
   const [wfhEnabledOverride, setWfhEnabledOverride] = useState<WfhOverrideValue>("inherit");
   const [wfhApprovalOverride, setWfhApprovalOverride] = useState<WfhOverrideValue>("inherit");
 
-  function load() {
+  const load = useCallback(() => {
     setLoading(true);
-    adminEmployees()
-      .then((res) => setEmployees(res.data))
+    adminEmployees({ page, per_page: 25 })
+      .then((res) => {
+        setEmployees(res.data);
+        setLastPage(res.last_page);
+      })
       .catch((err) =>
         setError(
           err instanceof Error ? err.message : "Failed to load employees",
         ),
       )
       .finally(() => setLoading(false));
-  }
+  }, [page]);
 
   useEffect(() => {
-    load();
     adminDepartments({ per_page: 100 })
       .then((res) =>
         setDepartments(
@@ -85,6 +90,10 @@ export default function AdminEmployeesPage() {
       .then(setCurrentUser)
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   function startEdit(employee: Employee) {
     setEditing(employee);
@@ -328,6 +337,7 @@ export default function AdminEmployeesPage() {
               </tbody>
             </table>
             </div>
+            <PaginationControls page={page} lastPage={lastPage} loading={loading} onPageChange={setPage} label="Employee pages" />
           </>
         )}
       </div>

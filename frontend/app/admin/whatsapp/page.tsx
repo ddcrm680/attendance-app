@@ -11,6 +11,7 @@ import {
   type WhatsAppSettings,
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
+import PaginationControls from "@/components/PaginationControls";
 
 const FAILURE_PREVIEW_LENGTH = 180;
 
@@ -23,6 +24,8 @@ function failurePreview(reason: string, expanded: boolean): string {
 export default function WhatsAppAdminPage() {
   const [settings, setSettings] = useState<WhatsAppSettings | null>(null);
   const [logs, setLogs] = useState<WhatsAppLog[]>([]);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -36,17 +39,18 @@ export default function WhatsAppAdminPage() {
     setError(null);
     Promise.all([
       adminWhatsAppSettings(),
-      adminWhatsAppLogs({ per_page: 25 }),
+      adminWhatsAppLogs({ page, per_page: 25 }),
       me(),
     ])
       .then(([nextSettings, nextLogs, employee]) => {
         setSettings(nextSettings);
         setLogs(nextLogs.data);
+        setLastPage(nextLogs.last_page);
         setCurrentUser(employee);
       })
       .catch((requestError: Error) => setError(requestError.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [page]);
   useEffect(() => {
     load();
   }, [load]);
@@ -293,6 +297,7 @@ export default function WhatsAppAdminPage() {
           Loading delivery logs…
         </p>
       )}
+      <PaginationControls page={page} lastPage={lastPage} loading={loading} onPageChange={setPage} label="WhatsApp log pages" />
     </section>
   );
 }

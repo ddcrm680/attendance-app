@@ -228,6 +228,7 @@ export default function AdminAttendance() {
             <option value="half_day">Half day</option>
             <option value="partial">Partial</option>
             <option value="absent">Absent</option>
+            <option value="work_from_home">Work from home</option>
           </select>
         </label>
         <label className="grid gap-1 text-sm text-slate-700">

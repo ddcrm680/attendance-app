@@ -8,23 +8,26 @@ import {
 import { formatDate } from "@/lib/presentation";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
+import PaginationControls from "@/components/PaginationControls";
 
 export default function AdminWfhPage() {
   const [items, setItems] = useState<AdminWfhRequest[]>([]);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    adminWfhRequests({ per_page: 50 })
-      .then((r) => setItems(r.data))
+    adminWfhRequests({ page, per_page: 50 })
+      .then((r) => { setItems(r.data); setLastPage(r.last_page); })
       .catch((e) =>
         setError(
           e instanceof Error ? e.message : "Unable to load WFH requests.",
         ),
       )
       .finally(() => setLoading(false));
-  }, []);
+  }, [page]);
   useEffect(() => {
     load();
   }, [load]);
@@ -105,6 +108,7 @@ export default function AdminWfhPage() {
           )}
         </div>
       )}
+      <PaginationControls page={page} lastPage={lastPage} loading={loading} onPageChange={setPage} label="WFH request pages" />
     </section>
   );
 }

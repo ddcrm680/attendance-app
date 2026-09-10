@@ -12,6 +12,7 @@ type IconName =
   | "live"
   | "whatsapp"
   | "audit"
+  | "settings"
   | "logout"
   | "back";
 const paths: Record<IconName, string> = {
@@ -31,6 +32,7 @@ const paths: Record<IconName, string> = {
   live: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-14v5l3 2",
   whatsapp: "M20 11.5a8 8 0 0 1-12.7 6.5L4 19l1-3.3A8 8 0 1 1 20 11.5Z",
   audit: "M5 4h14v16H5zM8 8h8M8 12h8M8 16h5",
+  settings: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0-5 1.2 2.2 2.5.5-.5 2.5 1.8 1.8-1.8 1.8.5 2.5-2.5.5L12 21l-1.2-2.2-2.5-.5.5-2.5L7 14l1.8-1.8-.5-2.5 2.5-.5L12 3Z",
   logout: "M10 17l5-5-5-5m5 5H3m11-8V3h6v18h-6v-4",
   back: "M19 12H5m6 6-6-6 6-6",
 };

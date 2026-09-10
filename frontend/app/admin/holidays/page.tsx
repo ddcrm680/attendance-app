@@ -4,6 +4,7 @@ import {
   adminHolidays,
   createHoliday,
   deleteHoliday,
+  updateHoliday,
   type Holiday,
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
@@ -12,6 +13,8 @@ export default function AdminHolidaysPage() {
   const [items, setItems] = useState<Holiday[]>([]);
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
+  const [active, setActive] = useState(true);
+  const [editing, setEditing] = useState<Holiday | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const load = useCallback(() => {
@@ -30,13 +33,19 @@ export default function AdminHolidaysPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await createHoliday({ name, holiday_date: date });
-      setName("");
-      setDate("");
+      if (editing) await updateHoliday(editing.id, { name, holiday_date: date, active });
+      else await createHoliday({ name, holiday_date: date, active });
+      resetForm();
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to create holiday.");
     }
+  }
+  function resetForm() {
+    setEditing(null);
+    setName("");
+    setDate("");
+    setActive(true);
   }
   async function remove(id: number) {
     try {
@@ -80,8 +89,10 @@ export default function AdminHolidaysPage() {
           className="rounded border p-2 text-sm"
         />
         <button className="app-primary-action rounded px-3 py-2 text-sm">
-          Add holiday
+          {editing ? "Save holiday" : "Add holiday"}
         </button>
+        {editing && <button type="button" className="app-secondary-action rounded px-3 py-2 text-sm" onClick={resetForm}>Cancel</button>}
+        <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} /> Active</label>
       </form>
       {loading ? (
         <p role="status" className="text-sm text-gray-500">
@@ -99,6 +110,14 @@ export default function AdminHolidaysPage() {
                 {item.active ? "" : "(inactive)"}
               </span>
               <button
+                type="button"
+                className="mr-3 underline"
+                onClick={() => { setEditing(item); setName(item.name); setDate(item.holiday_date.slice(0, 10)); setActive(item.active); }}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
                 className="text-red-700 underline"
                 onClick={() => remove(item.id)}
               >

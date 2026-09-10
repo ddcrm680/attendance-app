@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ApiError,
   checkIn,
@@ -26,6 +26,8 @@ function formatTime(iso: string | null) {
 
 export default function DashboardPage() {
   const [attendance, setAttendance] = useState<Attendance | null>(null);
+  const [attendanceLoading, setAttendanceLoading] = useState(true);
+  const [attendanceError, setAttendanceError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [selfieAction, setSelfieAction] = useState<
@@ -48,14 +50,25 @@ export default function DashboardPage() {
     };
   }, []);
 
+  const loadAttendance = useCallback(() => {
+    setAttendanceLoading(true);
+    setAttendanceError(null);
+    todayAttendance()
+      .then(setAttendance)
+      .catch((error) =>
+        setAttendanceError(
+          error instanceof Error ? error.message : "Unable to load today’s attendance.",
+        ),
+      )
+      .finally(() => setAttendanceLoading(false));
+  }, []);
+
   useEffect(() => {
     me()
       .then(setCurrentUser)
       .catch(() => {});
-    todayAttendance()
-      .then(setAttendance)
-      .catch(() => setAttendance(null));
-  }, []);
+    loadAttendance();
+  }, [loadAttendance]);
 
   useEffect(() => {
     if (!attendance?.check_in || attendance.check_out) {
@@ -158,6 +171,7 @@ export default function DashboardPage() {
               photo,
             });
       setAttendance(res.attendance);
+      setAttendanceError(null);
       setMessage(res.message);
       setSelfieAction(null);
     } catch (err) {
@@ -271,7 +285,7 @@ export default function DashboardPage() {
           onClick={() => {
             startPunch("check-in");
           }}
-          disabled={busy || hasCheckedIn || !online}
+          disabled={busy || attendanceLoading || Boolean(attendanceError) || hasCheckedIn || !online}
           className="attendance-action attendance-action-primary attendance-punch-primary w-full rounded-xl py-3 text-base font-semibold text-white disabled:opacity-40"
         >
           <span aria-hidden="true">➤</span> Check in
@@ -281,7 +295,7 @@ export default function DashboardPage() {
           onClick={() => {
             startPunch("check-out");
           }}
-          disabled={busy || !hasCheckedIn || hasCheckedOut || !online}
+          disabled={busy || attendanceLoading || Boolean(attendanceError) || !hasCheckedIn || hasCheckedOut || !online}
           className="attendance-action attendance-action-secondary attendance-punch-secondary w-full rounded-xl py-3 text-base font-semibold text-gray-900 disabled:opacity-40"
         >
           <span aria-hidden="true">□</span> Check out
@@ -290,6 +304,15 @@ export default function DashboardPage() {
 
       {message && (
         <p className="attendance-feedback" role="status">{message}</p>
+      )}
+
+      {attendanceError && (
+        <div role="alert" className="app-feedback app-feedback-error text-sm">
+          {attendanceError}{" "}
+          <button type="button" className="underline" onClick={loadAttendance}>
+            Retry
+          </button>
+        </div>
       )}
 
       {selfieAction && (
@@ -313,7 +336,9 @@ export default function DashboardPage() {
             </span>
           )}
         </div>
-        {attendance ? (
+        {attendanceLoading ? (
+          <p className="mt-3 text-sm text-gray-500" role="status">Loading today’s attendance…</p>
+        ) : attendance ? (
           <div className="attendance-summary-grid mt-3">
             <div>
               <p>Check-in</p>
@@ -328,7 +353,7 @@ export default function DashboardPage() {
               <strong>{formatStatus(attendance.status)}</strong>
             </div>
           </div>
-        ) : (
+        ) : !attendanceError ? (
           <div className="attendance-empty-state mt-3">
               <span aria-hidden="true">✓</span>
               <div>
@@ -336,7 +361,7 @@ export default function DashboardPage() {
                 <p className="mt-1 text-sm text-gray-600">Have a productive day!</p>
               </div>
           </div>
-        )}
+        ) : null}
       </section>
     </div>
   );

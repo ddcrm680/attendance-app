@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
+import PaginationControls from "@/components/PaginationControls";
 
 function localDateInputValue(date = new Date()): string {
   const parts = new Intl.DateTimeFormat(undefined, {
@@ -30,6 +31,8 @@ function localDateInputValue(date = new Date()): string {
 export default function WfhPage() {
   const [user, setUser] = useState<Employee | null>(null);
   const [requests, setRequests] = useState<WfhRequest[]>([]);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
   const [date, setDate] = useState("");
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -40,16 +43,17 @@ export default function WfhPage() {
     setLoading(true);
     setError(null);
     setFieldErrors(null);
-    Promise.all([me(), myWfhRequests()])
+    Promise.all([me(), myWfhRequests({ page })])
       .then(([employee, response]) => {
         setUser(employee);
         setRequests(response.data);
+        setLastPage(response.last_page);
       })
       .catch((e) =>
         setError(e instanceof Error ? e.message : "Unable to load WFH status."),
       )
       .finally(() => setLoading(false));
-  }, []);
+  }, [page]);
   useEffect(() => {
     load();
   }, [load]);
@@ -165,6 +169,7 @@ export default function WfhPage() {
           </p>
         )}
       </div>
+      <PaginationControls page={page} lastPage={lastPage} loading={loading} onPageChange={setPage} label="WFH request history pages" />
     </section>
   );
 }

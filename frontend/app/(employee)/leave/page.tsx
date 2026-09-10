@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   cancelLeave,
   createLeave,
@@ -10,30 +10,37 @@ import {
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
+import PaginationControls from "@/components/PaginationControls";
 
 type Feedback = { tone: "success" | "error"; text: string };
 
 export default function LeavePage() {
   const [types, setTypes] = useState<LeaveType[]>([]);
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [type, setType] = useState("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [reason, setReason] = useState("");
-  const load = () =>
-    Promise.all([leaveTypes(), myLeaves()])
+  const load = useCallback(() => {
+    setLoading(true);
+    return Promise.all([leaveTypes(), myLeaves({ page })])
       .then(([t, l]) => {
         setTypes(t);
         setLeaves(l.data);
+        setLastPage(l.last_page);
         if (t[0]) setType((v) => v || String(t[0].id));
       })
       .catch(() =>
         setFeedback({ tone: "error", text: "Unable to load leave information." }),
-      );
+      ).finally(() => setLoading(false));
+  }, [page]);
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setFeedback(null);
@@ -112,6 +119,7 @@ export default function LeavePage() {
         </p>
       )}
       <div className="space-y-2">
+        {loading && <p role="status" className="text-sm text-gray-500">Loading leave requests…</p>}
         {leaves.map((l) => (
           <div key={l.id} className="app-card p-3 text-sm sm:p-4">
             <p className="flex items-center gap-1 font-medium">
@@ -147,6 +155,7 @@ export default function LeavePage() {
           <p className="text-sm text-gray-500">No leave requests yet.</p>
         )}
       </div>
+      <PaginationControls page={page} lastPage={lastPage} loading={loading} onPageChange={setPage} label="Leave history pages" />
     </div>
   );
 }

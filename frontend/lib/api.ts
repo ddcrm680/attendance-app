@@ -1,6 +1,11 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
 export type ApiFieldErrors = Record<string, string[]>;
+export type Paginated<T> = {
+  data: T[];
+  current_page: number;
+  last_page: number;
+};
 
 export class ApiError extends Error {
   readonly status: number;
@@ -191,6 +196,7 @@ export type LiveEmployee = {
   } | null;
 };
 export type LeaveType = { id: number; name: string; reason_required: boolean };
+export type AdminLeaveType = LeaveType & { active: boolean };
 export type LeaveRequest = {
   id: number;
   start_date: string;
@@ -318,8 +324,9 @@ export function adminLiveEmployees() {
 export function leaveTypes() {
   return apiFetch<LeaveType[]>("/leave-types");
 }
-export function myLeaves() {
-  return apiFetch<{ data: LeaveRequest[] }>("/leaves");
+export function myLeaves(params: { page?: number } = {}) {
+  const query = params.page ? `?page=${params.page}` : "";
+  return apiFetch<Paginated<LeaveRequest>>(`/leaves${query}`);
 }
 export function createLeave(payload: {
   leave_type_id: number;
@@ -355,8 +362,9 @@ export type WfhRequest = {
   status: "pending" | "approved" | "rejected";
   reviewed_at?: string | null;
 };
-export function myWfhRequests() {
-  return apiFetch<{ data: WfhRequest[] }>("/wfh-requests");
+export function myWfhRequests(params: { page?: number } = {}) {
+  const query = params.page ? `?page=${params.page}` : "";
+  return apiFetch<Paginated<WfhRequest>>(`/wfh-requests${query}`);
 }
 export function createWfhRequest(payload: {
   attendance_date: string;
@@ -532,6 +540,39 @@ export function adminOffices() {
   return apiFetch<Office[]>("/admin/offices");
 }
 
+export type AttendanceSetting = {
+  id: number;
+  office_id: number | null;
+  office_start_time: string;
+  office_end_time: string;
+  grace_period_minutes: number;
+  minimum_working_minutes: number;
+  half_day_after_minutes: number;
+  overtime_enabled: boolean;
+  gps_accuracy_threshold_meters: number;
+  location_tracking_interval_seconds: number;
+  working_days: number[];
+  wfh_enabled: boolean;
+  wfh_gps_required: boolean;
+  wfh_photo_required: boolean;
+  wfh_approval_required: boolean;
+  wfh_tracking_enabled: boolean;
+};
+
+export function adminAttendanceSetting(officeId: number) {
+  return apiFetch<AttendanceSetting | null>(`/admin/offices/${officeId}/attendance-settings`);
+}
+
+export function updateAdminAttendanceSetting(
+  officeId: number,
+  payload: Omit<AttendanceSetting, "id" | "office_id">,
+) {
+  return apiFetch<AttendanceSetting>(`/admin/offices/${officeId}/attendance-settings`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function createOffice(payload: {
   name: string;
   address?: string;
@@ -682,6 +723,24 @@ export function reviewLeave(id: number, status: "approved" | "rejected") {
   return apiFetch<AdminLeaveRequest>(`/admin/leaves/${id}`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
+  });
+}
+export function adminLeaveTypes() {
+  return apiFetch<AdminLeaveType[]>("/admin/leave-types");
+}
+export function createAdminLeaveType(payload: Omit<AdminLeaveType, "id">) {
+  return apiFetch<AdminLeaveType>("/admin/leave-types", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+export function updateAdminLeaveType(
+  id: number,
+  payload: Partial<Omit<AdminLeaveType, "id">>,
+) {
+  return apiFetch<AdminLeaveType>(`/admin/leave-types/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
   });
 }
 export type Holiday = {
