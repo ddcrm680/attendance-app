@@ -177,6 +177,62 @@ class WfhApprovalRuleTest extends TestCase
             ->assertJsonValidationErrors('position_timestamp');
     }
 
+    public function test_wfh_check_out_can_omit_gps_and_photo_when_the_effective_policy_allows_it(): void
+    {
+        [$employee] = $this->employee([
+            'wfh_gps_required' => false,
+            'wfh_photo_required' => false,
+        ]);
+
+        Sanctum::actingAs($employee);
+        $this->postJson('/api/attendance/check-in', ['mode' => 'wfh'])->assertCreated();
+
+        $this->postJson('/api/attendance/check-out', ['mode' => 'wfh'])
+            ->assertOk()
+            ->assertJsonPath('attendance.mode', 'wfh');
+
+        $this->assertDatabaseHas('attendance', [
+            'employee_id' => $employee->id,
+            'mode' => 'wfh',
+            'check_out_latitude' => null,
+            'check_out_photo_path' => null,
+        ]);
+    }
+
+    public function test_wfh_check_out_requires_gps_when_the_effective_policy_requires_it(): void
+    {
+        [$employee] = $this->employee([
+            'wfh_gps_required' => true,
+            'wfh_photo_required' => false,
+        ]);
+
+        Sanctum::actingAs($employee);
+        $this->postJson('/api/attendance/check-in', [
+            'mode' => 'wfh',
+            'latitude' => 19.0760,
+            'longitude' => 72.8777,
+            'accuracy' => 10,
+        ])->assertCreated();
+
+        $this->postJson('/api/attendance/check-out', ['mode' => 'wfh'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('location');
+
+        $this->postJson('/api/attendance/check-out', [
+            'mode' => 'wfh',
+            'latitude' => 19.0760,
+            'longitude' => 72.8777,
+            'accuracy' => 10,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('attendance', [
+            'employee_id' => $employee->id,
+            'check_out_latitude' => 19.076,
+            'check_out_longitude' => 72.8777,
+            'check_out_accuracy' => 10,
+        ]);
+    }
+
     /** @return array{Employee, Office} */
     private function employee(array $settings = [], bool $wfhEligible = true): array
     {

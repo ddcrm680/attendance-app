@@ -8,6 +8,8 @@ const apiOrigin = (() => {
   }
 })();
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -21,7 +23,7 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   // Next.js App Router emits inline bootstrap/style content. A nonce-based CSP
   // would require dynamic rendering and is not compatible with this static setup.
-  "script-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline'" + (isDevelopment ? " 'unsafe-eval'" : ''),
   "style-src 'self' 'unsafe-inline'",
   "worker-src 'self'",
 ].join('; ');

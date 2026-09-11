@@ -47,8 +47,9 @@ export default function EmployeeLayout({
               <EmployeeDashboardReturn role={user.role} />
               <ThemeToggle />
               <button
+                type="button"
                 onClick={handleLogout}
-                className="hidden text-sm font-semibold text-gray-500 hover:text-gray-900 sm:block"
+                className="inline-flex min-h-11 shrink-0 items-center rounded-md px-2 text-sm font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                 aria-label="Log out"
               >
                 Log out

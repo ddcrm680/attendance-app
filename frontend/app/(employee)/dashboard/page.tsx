@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ApiError,
+  type ApiFieldErrors,
   checkIn,
   checkOut,
   me,
@@ -30,6 +31,7 @@ export default function DashboardPage() {
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ApiFieldErrors | null>(null);
   const [selfieAction, setSelfieAction] = useState<
     "check-in" | "check-out" | null
   >(null);
@@ -38,6 +40,7 @@ export default function DashboardPage() {
   const [online, setOnline] = useState(true);
   const [currentUser, setCurrentUser] = useState<Employee | null>(null);
   const [mode, setMode] = useState<"office" | "wfh">("office");
+  const punchInFlight = useRef(false);
 
   useEffect(() => {
     setOnline(navigator.onLine);
@@ -144,11 +147,14 @@ export default function DashboardPage() {
   }
 
   async function submitPunch(action: "check-in" | "check-out", photo?: File) {
+    if (punchInFlight.current) return;
     if (!navigator.onLine)
       throw new Error(
         "You are offline. Reconnect before submitting attendance; this punch has not been saved.",
       );
+    punchInFlight.current = true;
     setMessage(null);
+    setFieldErrors(null);
     setBusy(true);
     try {
       const requirements = requirementsFor(action);
@@ -169,12 +175,14 @@ export default function DashboardPage() {
               accuracy: pos?.coords.accuracy,
               positionTimestamp: pos?.timestamp,
               photo,
+              mode: attendance?.mode,
             });
       setAttendance(res.attendance);
       setAttendanceError(null);
       setMessage(res.message);
       setSelfieAction(null);
     } catch (err) {
+      if (err instanceof ApiError) setFieldErrors(err.fieldErrors ?? null);
       const msg =
         err instanceof Error
           ? err.message
@@ -182,6 +190,7 @@ export default function DashboardPage() {
       setMessage(msg);
       throw new Error(msg);
     } finally {
+      punchInFlight.current = false;
       setBusy(false);
     }
   }
@@ -191,6 +200,7 @@ export default function DashboardPage() {
 
   function startPunch(action: "check-in" | "check-out") {
     setMessage(null);
+    setFieldErrors(null);
     if (requirementsFor(action).photo) {
       setSelfieAction(action);
       return;
@@ -304,6 +314,12 @@ export default function DashboardPage() {
 
       {message && (
         <p className="attendance-feedback" role="status">{message}</p>
+      )}
+
+      {fieldErrors && (
+        <div role="alert" className="app-feedback app-feedback-error text-sm">
+          {Object.values(fieldErrors).flat().map((error) => <p key={error}>{error}</p>)}
+        </div>
       )}
 
       {attendanceError && (

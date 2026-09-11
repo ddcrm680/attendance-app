@@ -252,6 +252,7 @@ export function checkOut(payload: {
   accuracy?: number;
   positionTimestamp?: number;
   photo?: File;
+  mode?: "office" | "wfh";
 }) {
   const body = new FormData();
   if (payload.latitude !== undefined) body.append("latitude", String(payload.latitude));
@@ -260,6 +261,7 @@ export function checkOut(payload: {
   if (payload.positionTimestamp !== undefined)
     body.append("position_timestamp", String(payload.positionTimestamp));
   if (payload.photo) body.append("photo", payload.photo);
+  if (payload.mode) body.append("mode", payload.mode);
   return apiFetch<{ message: string; attendance: Attendance }>(
     "/attendance/check-out",
     {

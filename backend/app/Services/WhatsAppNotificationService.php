@@ -21,7 +21,7 @@ class WhatsAppNotificationService
         'attendance_punch_in',
         'attendance_punch_out',
         'attendance_late',
-        'attendance_daily_summary',
+        'attendance_daily_summary_v2',
     ];
 
     public function queueAttendance(Attendance $attendance, string $type): ?WhatsAppMessageLog
@@ -85,15 +85,15 @@ class WhatsAppNotificationService
         if ($log->notification_type === 'daily_summary') {
             $summary = $this->dailySummaryData(Carbon::parse($log->payload['date']));
 
-            return new WhatsAppTemplate('attendance_daily_summary', 'en_US', [
+            return new WhatsAppTemplate('attendance_daily_summary_v2', 'en_US', [
                 'attendance_date' => $summary['date'],
                 'total_employees' => $summary['total'],
                 'present_count' => $summary['present'],
                 'absent_count' => $summary['absent'],
                 'on_leave_count' => $summary['leave'],
                 'late_count' => $summary['late'],
-                'currently_working_count' => $summary['working'],
-                'average_working_hours' => $summary['average_working_hours'],
+                'working_count' => $summary['working'],
+                'avg_working_hours' => $summary['average_working_hours'],
             ]);
         }
 

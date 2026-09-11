@@ -208,7 +208,8 @@ class WhatsAppNotificationTest extends TestCase
 
         $template = app(WhatsAppNotificationService::class)->templateFor($log);
 
-        $this->assertSame('attendance_daily_summary', $template?->name);
+        $this->assertSame('attendance_daily_summary_v2', $template?->name);
+        $this->assertNotSame('attendance_daily_summary', $template?->name);
         $this->assertSame('en_US', $template?->languageCode);
         $this->assertSame([
             'attendance_date' => '2026-04-06',
@@ -217,12 +218,64 @@ class WhatsAppNotificationTest extends TestCase
             'absent_count' => 0,
             'on_leave_count' => 0,
             'late_count' => 0,
-            'currently_working_count' => 0,
-            'average_working_hours' => '8h 24m',
+            'working_count' => 0,
+            'avg_working_hours' => '8h 24m',
         ], $template?->bodyParameters);
         $this->assertSame([], $template?->headerParameters);
         $this->assertSame([], $template?->buttonParameters);
-        $this->assertSame('attendance_daily_summary', app(WhatsAppNotificationService::class)->activeTemplateFor($log)?->name);
+        $this->assertSame('attendance_daily_summary_v2', app(WhatsAppNotificationService::class)->activeTemplateFor($log)?->name);
+        $this->assertNotSame('attendance_daily_summary', app(WhatsAppNotificationService::class)->activeTemplateFor($log)?->name);
+    }
+
+    public function test_cloud_provider_builds_the_active_daily_summary_v2_template_payload(): void
+    {
+        config()->set('whatsapp.base_url', 'https://graph.facebook.com');
+        config()->set('whatsapp.graph_api_version', 'v99.0');
+        config()->set('whatsapp.phone_number_id', 'phone-123');
+        config()->set('whatsapp.access_token', 'test-token');
+        Http::fake(['*' => Http::response(['messages' => [['id' => 'wamid.daily-summary-v2']]], 200)]);
+
+        $attendance = $this->attendance($this->employee());
+        $attendance->update([
+            'check_out' => Carbon::parse('2026-04-06 17:24:00'),
+            'working_minutes' => 504,
+        ]);
+        $log = WhatsAppMessageLog::create([
+            'notification_type' => 'daily_summary',
+            'recipient' => '+919000000000',
+            'provider' => 'cloud',
+            'status' => 'queued',
+            'idempotency_key' => 'daily-summary-v2-provider-template-test',
+            'payload' => ['date' => '2026-04-06'],
+        ]);
+
+        app(CloudApiWhatsAppProvider::class)->send(
+            '+919000000000',
+            '',
+            null,
+            app(WhatsAppNotificationService::class)->activeTemplateFor($log),
+        );
+
+        Http::assertSent(function ($request): bool {
+            $payload = $request->data();
+
+            return $payload['type'] === 'template'
+                && $payload['template']['name'] === 'attendance_daily_summary_v2'
+                && $payload['template']['language']['code'] === 'en_US'
+                && $payload['template']['components'] === [[
+                    'type' => 'body',
+                    'parameters' => [
+                        ['type' => 'text', 'text' => '2026-04-06', 'parameter_name' => 'attendance_date'],
+                        ['type' => 'text', 'text' => '1', 'parameter_name' => 'total_employees'],
+                        ['type' => 'text', 'text' => '1', 'parameter_name' => 'present_count'],
+                        ['type' => 'text', 'text' => '0', 'parameter_name' => 'absent_count'],
+                        ['type' => 'text', 'text' => '0', 'parameter_name' => 'on_leave_count'],
+                        ['type' => 'text', 'text' => '0', 'parameter_name' => 'late_count'],
+                        ['type' => 'text', 'text' => '0', 'parameter_name' => 'working_count'],
+                        ['type' => 'text', 'text' => '8h 24m', 'parameter_name' => 'avg_working_hours'],
+                    ],
+                ]];
+        });
     }
 
     public function test_active_attendance_jobs_use_templates_without_photos(): void
