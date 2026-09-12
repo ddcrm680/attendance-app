@@ -37,10 +37,8 @@ class LocationController extends Controller
                 'message' => 'No active check-in session. Location tracking only runs between check-in and check-out.',
             ], 409);
         }
-        if ($attendance->mode === 'wfh' && ! $this->settings->wfhFor($employee)->trackingEnabled) {
-            return response()->json([
-                'message' => 'Live tracking is disabled for this work-from-home session.',
-            ], 403);
+        if ($reason = $this->trackingIneligibility($attendance, $employee)) {
+            return $this->trackingIneligibleResponse($reason);
         }
 
         $data = $request->validated();
@@ -50,11 +48,6 @@ class LocationController extends Controller
             ], 403);
         }
 
-        if (! $attendance->office) {
-            return response()->json([
-                'message' => 'The attendance office is no longer available. Contact HR.',
-            ], 422);
-        }
         try {
             $result = $this->writes->run(function () use ($attendance, $employee, $data) {
                 $attendance = Attendance::whereKey($attendance->id)->lockForUpdate()->first();
@@ -136,9 +129,7 @@ class LocationController extends Controller
             ->whereNull('check_out')
             ->orderByDesc('attendance_date')
             ->first();
-        $active = $attendance
-            && ! ($attendance->mode === 'wfh'
-                && ! $this->settings->wfhFor($request->user())->trackingEnabled);
+        $active = $attendance && $this->trackingIneligibility($attendance, $request->user()) === null;
 
         return response()->json([
             'active' => (bool) $active,
@@ -152,5 +143,30 @@ class LocationController extends Controller
     private function trackingInterval(Attendance $attendance): int
     {
         return max(30, min(300, $this->settings->forOffice($attendance->office)?->location_tracking_interval_seconds ?? 60));
+    }
+
+    private function trackingIneligibility(Attendance $attendance, $employee): ?string
+    {
+        if ($attendance->mode === 'wfh' && ! $this->settings->wfhFor($employee)->trackingEnabled) {
+            return 'wfh_tracking_disabled';
+        }
+
+        return $this->locations->officeIsUsable($attendance->office)
+            ? null
+            : 'office_unavailable';
+    }
+
+    private function trackingIneligibleResponse(string $reason)
+    {
+        if ($reason === 'wfh_tracking_disabled') {
+            return response()->json([
+                'message' => 'Live tracking is disabled for this work-from-home session.',
+            ], 403);
+        }
+
+        return response()->json([
+            'message' => 'The attendance office is no longer available. Contact HR.',
+            'code' => 'tracking_office_unavailable',
+        ], 422);
     }
 }

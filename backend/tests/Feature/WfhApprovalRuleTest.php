@@ -141,7 +141,7 @@ class WfhApprovalRuleTest extends TestCase
         ]);
     }
 
-    public function test_wfh_with_required_gps_rejects_poor_accuracy(): void
+    public function test_wfh_with_required_gps_accepts_and_stores_poor_accuracy(): void
     {
         [$employee] = $this->employee([
             'wfh_gps_required' => true,
@@ -154,10 +154,31 @@ class WfhApprovalRuleTest extends TestCase
             'mode' => 'wfh',
             'latitude' => 19.0760,
             'longitude' => 72.8777,
-            'accuracy' => 21,
-        ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('accuracy');
+            'accuracy' => 300,
+            'position_timestamp' => now()->valueOf(),
+        ])->assertCreated();
+
+        $attendance = Attendance::firstOrFail();
+        $this->assertDatabaseHas('attendance', [
+            'id' => $attendance->id,
+            'check_in_accuracy' => 300,
+        ]);
+        $this->assertDatabaseHas('location_logs', [
+            'attendance_id' => $attendance->id,
+            'accuracy' => 300,
+        ]);
+
+        $this->postJson('/api/attendance/check-out', [
+            'mode' => 'wfh',
+            'latitude' => 19.0760,
+            'longitude' => 72.8777,
+            'accuracy' => 150,
+            'position_timestamp' => now()->valueOf(),
+        ])->assertOk();
+        $this->assertDatabaseHas('attendance', [
+            'id' => $attendance->id,
+            'check_out_accuracy' => 150,
+        ]);
     }
 
     public function test_wfh_with_required_gps_rejects_a_stale_location(): void
@@ -175,6 +196,20 @@ class WfhApprovalRuleTest extends TestCase
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('position_timestamp');
+    }
+
+    public function test_required_wfh_gps_requires_a_timestamp_for_check_in_and_check_out(): void
+    {
+        [$employee] = $this->employee([
+            'wfh_gps_required' => true,
+            'wfh_photo_required' => false,
+        ]);
+        Sanctum::actingAs($employee);
+
+        $location = ['mode' => 'wfh', 'latitude' => 19.0760, 'longitude' => 72.8777, 'accuracy' => 10];
+        $this->postJson('/api/attendance/check-in', $location)->assertUnprocessable()->assertJsonValidationErrors('position_timestamp');
+        $this->postJson('/api/attendance/check-in', $location + ['position_timestamp' => now()->valueOf()])->assertCreated();
+        $this->postJson('/api/attendance/check-out', $location)->assertUnprocessable()->assertJsonValidationErrors('position_timestamp');
     }
 
     public function test_wfh_check_out_can_omit_gps_and_photo_when_the_effective_policy_allows_it(): void
@@ -199,6 +234,22 @@ class WfhApprovalRuleTest extends TestCase
         ]);
     }
 
+    public function test_optional_wfh_gps_requires_a_timestamp_when_coordinates_are_supplied(): void
+    {
+        [$employee] = $this->employee([
+            'wfh_gps_required' => false,
+            'wfh_photo_required' => false,
+        ]);
+        Sanctum::actingAs($employee);
+
+        $this->postJson('/api/attendance/check-in', [
+            'mode' => 'wfh',
+            'latitude' => 19.0760,
+            'longitude' => 72.8777,
+            'accuracy' => 10,
+        ])->assertUnprocessable()->assertJsonValidationErrors('position_timestamp');
+    }
+
     public function test_wfh_check_out_requires_gps_when_the_effective_policy_requires_it(): void
     {
         [$employee] = $this->employee([
@@ -212,6 +263,7 @@ class WfhApprovalRuleTest extends TestCase
             'latitude' => 19.0760,
             'longitude' => 72.8777,
             'accuracy' => 10,
+            'position_timestamp' => now()->valueOf(),
         ])->assertCreated();
 
         $this->postJson('/api/attendance/check-out', ['mode' => 'wfh'])
@@ -223,6 +275,7 @@ class WfhApprovalRuleTest extends TestCase
             'latitude' => 19.0760,
             'longitude' => 72.8777,
             'accuracy' => 10,
+            'position_timestamp' => now()->valueOf(),
         ])->assertOk();
 
         $this->assertDatabaseHas('attendance', [

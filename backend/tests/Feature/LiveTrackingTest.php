@@ -38,6 +38,7 @@ class LiveTrackingTest extends TestCase
             'attendance_id' => $attendance->id,
             'latitude' => 28.7000,
             'longitude' => 77.2090,
+            'accuracy' => 300,
         ]))->assertCreated()->assertJsonPath('location.attendance_id', $attendance->id);
 
         $this->assertDatabaseHas('location_logs', [
@@ -45,7 +46,7 @@ class LiveTrackingTest extends TestCase
             'attendance_id' => $attendance->id,
             'latitude' => 28.7000,
             'longitude' => 77.2090,
-            'accuracy' => 10,
+            'accuracy' => 300,
         ]);
     }
 
@@ -56,6 +57,29 @@ class LiveTrackingTest extends TestCase
         $attendance->update(['check_out' => now()]);
         $this->postJson('/api/location/update', $this->location(['attendance_id' => $attendance->id]))->assertConflict();
         $this->getJson('/api/location/tracking-status')->assertOk()->assertJsonPath('active', false);
+    }
+
+    public function test_tracking_status_is_inactive_when_the_attendance_office_is_not_usable(): void
+    {
+        [$employee, $office] = $this->employee(); Sanctum::actingAs($employee); $attendance = $this->checkIn();
+        $office->update(['status' => 'inactive']);
+
+        $this->getJson('/api/location/tracking-status')->assertOk()->assertJsonPath('active', false);
+        $this->postJson('/api/location/update', $this->location(['attendance_id' => $attendance->id]))
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'tracking_office_unavailable');
+    }
+
+    public function test_live_tracking_requires_a_position_timestamp(): void
+    {
+        [$employee] = $this->employee(); Sanctum::actingAs($employee); $attendance = $this->checkIn();
+
+        $this->postJson('/api/location/update', [
+            'attendance_id' => $attendance->id,
+            'latitude' => 28.6139,
+            'longitude' => 77.2090,
+            'accuracy' => 10,
+        ])->assertUnprocessable()->assertJsonValidationErrors('position_timestamp');
     }
 
     public function test_admin_live_feed_returns_only_open_sessions_with_the_latest_location(): void

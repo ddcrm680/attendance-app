@@ -95,6 +95,7 @@ class AttendanceFoundationTest extends TestCase
             'latitude' => 28.6139,
             'longitude' => 77.2090,
             'accuracy' => 10,
+            'position_timestamp' => now()->valueOf(),
             'photo' => UploadedFile::fake()->image('selfie.jpg', 480, 480),
         ])
             ->assertCreated()
@@ -111,6 +112,7 @@ class AttendanceFoundationTest extends TestCase
             'latitude' => 28.6139,
             'longitude' => 77.2090,
             'accuracy' => 10,
+            'position_timestamp' => now()->valueOf(),
             'photo' => UploadedFile::fake()->image('selfie.jpg', 480, 480),
         ])
             ->assertOk()

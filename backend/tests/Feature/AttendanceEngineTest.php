@@ -99,6 +99,34 @@ class AttendanceEngineTest extends TestCase
         $this->assertDatabaseHas('attendance_settings', ['office_id' => $office->id, 'minimum_working_minutes' => 450]);
     }
 
+    public function test_attendance_settings_enforce_the_effective_tracking_interval_contract(): void
+    {
+        [, $office] = $this->employeeWithRules();
+        $admin = Employee::create(['employee_code' => 'ADMIN-INTERVAL', 'name' => 'Admin', 'email' => 'admin-interval@example.test', 'mobile' => '9000000003', 'password' => 'password', 'role' => 'super_admin']);
+        Sanctum::actingAs($admin);
+
+        $this->getJson("/api/admin/offices/{$office->id}/attendance-settings")
+            ->assertOk()
+            ->assertJsonPath('location_tracking_interval_seconds', 60);
+        $this->putJson("/api/admin/offices/{$office->id}/attendance-settings", ['location_tracking_interval_seconds' => 30])->assertOk()->assertJsonPath('location_tracking_interval_seconds', 30);
+        $this->putJson("/api/admin/offices/{$office->id}/attendance-settings", ['location_tracking_interval_seconds' => 300])->assertOk()->assertJsonPath('location_tracking_interval_seconds', 300);
+        $this->putJson("/api/admin/offices/{$office->id}/attendance-settings", ['location_tracking_interval_seconds' => 29])->assertUnprocessable()->assertJsonValidationErrors('location_tracking_interval_seconds');
+        $this->putJson("/api/admin/offices/{$office->id}/attendance-settings", ['location_tracking_interval_seconds' => 301])->assertUnprocessable()->assertJsonValidationErrors('location_tracking_interval_seconds');
+    }
+
+    public function test_attendance_settings_expose_null_working_days_as_all_days(): void
+    {
+        [, $office] = $this->employeeWithRules();
+        $office->attendanceSetting->update(['working_days' => null]);
+        $admin = Employee::create(['employee_code' => 'ADMIN-DAYS', 'name' => 'Admin', 'email' => 'admin-days@example.test', 'mobile' => '9000000004', 'password' => 'password', 'role' => 'super_admin']);
+        Sanctum::actingAs($admin);
+
+        $this->getJson("/api/admin/offices/{$office->id}/attendance-settings")
+            ->assertOk()
+            ->assertJsonPath('working_days', [1, 2, 3, 4, 5, 6, 7]);
+        $this->assertNull($office->attendanceSetting->fresh()->working_days);
+    }
+
     private function employeeWithRules(array $rules = []): array
     {
         $department = Department::create(['name' => 'Engineering']);
@@ -107,5 +135,5 @@ class AttendanceEngineTest extends TestCase
         return [Employee::create(['employee_code' => 'E-'.uniqid(), 'name' => 'Employee', 'email' => uniqid().'@example.test', 'mobile' => '9000000001', 'password' => 'password', 'department_id' => $department->id, 'office_id' => $office->id]), $office];
     }
 
-    private function location(): array { return ['latitude' => 28.6139, 'longitude' => 77.2090, 'accuracy' => 10, 'photo' => UploadedFile::fake()->image('selfie.jpg', 480, 480)]; }
+    private function location(): array { return ['latitude' => 28.6139, 'longitude' => 77.2090, 'accuracy' => 10, 'position_timestamp' => now()->valueOf(), 'photo' => UploadedFile::fake()->image('selfie.jpg', 480, 480)]; }
 }

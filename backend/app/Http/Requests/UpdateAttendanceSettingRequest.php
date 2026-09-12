@@ -18,7 +18,7 @@ class UpdateAttendanceSettingRequest extends FormRequest
             'half_day_after_minutes' => ['sometimes', 'integer', 'min:1', 'max:1440'],
             'overtime_enabled' => ['sometimes', 'boolean'],
             'gps_accuracy_threshold_meters' => ['sometimes', 'integer', 'min:1', 'max:10000'],
-            'location_tracking_interval_seconds' => ['sometimes', 'integer', 'min:5', 'max:3600'],
+            'location_tracking_interval_seconds' => ['sometimes', 'integer', 'min:30', 'max:300'],
             'working_days' => ['sometimes', 'array', 'min:1'],
             'working_days.*' => ['integer', 'between:1,7'],
             'wfh_enabled' => ['sometimes', 'boolean'],

@@ -10,7 +10,6 @@ class VerifiedLocationService
 {
     public function __construct(
         private GeofenceService $geofence,
-        private AttendanceSettingsResolver $settings,
     ) {}
 
     /**
@@ -22,11 +21,7 @@ class VerifiedLocationService
      */
     public function verify(Office $office, array $location): array
     {
-        if ($office->status !== 'active' || ! $this->isValidOffice($office)) {
-            throw ValidationException::withMessages([
-                'office' => ['Your assigned office cannot be used for attendance. Contact HR.'],
-            ]);
-        }
+        $this->assertUsableOffice($office);
 
         $verifiedLocation = $this->verifyGps($office, $location);
         $result = $this->geofence->isWithinOffice($office, $verifiedLocation['latitude'], $verifiedLocation['longitude']);
@@ -37,13 +32,7 @@ class VerifiedLocationService
     public function verifyGps(Office $office, array $location): array
     {
         $this->assertFreshPosition($location['position_timestamp'] ?? null);
-        $settings = $this->settings->forOffice($office);
         $accuracy = (float) $location['accuracy'];
-        if ($accuracy > ($settings?->gps_accuracy_threshold_meters ?? 100)) {
-            throw ValidationException::withMessages([
-                'accuracy' => ['GPS accuracy is too low. Move to an open area and try again.'],
-            ]);
-        }
 
         return [
             'latitude' => (float) $location['latitude'],
@@ -53,10 +42,26 @@ class VerifiedLocationService
         ];
     }
 
+    public function officeIsUsable(?Office $office): bool
+    {
+        return $office !== null && $office->status === 'active' && $this->isValidOffice($office);
+    }
+
+    public function assertUsableOffice(?Office $office): void
+    {
+        if (! $this->officeIsUsable($office)) {
+            throw ValidationException::withMessages([
+                'office' => ['Your assigned office cannot be used for attendance. Contact HR.'],
+            ]);
+        }
+    }
+
     private function assertFreshPosition(?int $timestamp): void
     {
         if ($timestamp === null) {
-            return;
+            throw ValidationException::withMessages([
+                'position_timestamp' => ['A current location timestamp is required. Refresh your location and try again.'],
+            ]);
         }
         $capturedAt = Carbon::createFromTimestampMs($timestamp, config('app.timezone'));
         if (

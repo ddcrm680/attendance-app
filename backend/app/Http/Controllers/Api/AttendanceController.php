@@ -58,15 +58,7 @@ class AttendanceController extends Controller
             ]);
         }
 
-        if ($requiresGps && (! isset($data['latitude'], $data['longitude'], $data['accuracy']))) {
-            throw ValidationException::withMessages([
-                'location' => ['Location is required for this attendance mode.'],
-            ]);
-        }
-
-        $location = $requiresGps
-            ? ($mode === 'wfh' ? $this->locations->verifyGps($office, $data) : $this->locations->verify($office, $data))
-            : null;
+        $location = $this->punchLocation($data, $requiresGps, $mode, $office);
         $photoPath = $request->hasFile('photo')
             ? $this->photos->store($request->file('photo'), $employee, 'check_in')
             : null;
@@ -116,15 +108,7 @@ class AttendanceController extends Controller
             ]);
         }
 
-        if ($requiresGps && (! isset($data['latitude'], $data['longitude'], $data['accuracy']))) {
-            throw ValidationException::withMessages([
-                'location' => ['Location is required for this attendance mode.'],
-            ]);
-        }
-
-        $location = $requiresGps
-            ? ($open->mode === 'wfh' ? $this->locations->verifyGps($open->office, $data) : $this->locations->verify($open->office, $data))
-            : null;
+        $location = $this->punchLocation($data, $requiresGps, $open->mode, $open->office);
         $photoPath = $request->hasFile('photo')
             ? $this->photos->store($request->file('photo'), $employee, 'check_out')
             : null;
@@ -181,6 +165,32 @@ class AttendanceController extends Controller
         $this->authorize('view', $attendance);
         abort_unless(in_array($punch, ['check_in', 'check_out'], true), 404);
         return $this->photos->response($attendance, $punch);
+    }
+
+    private function punchLocation(array $data, bool $required, string $mode, \App\Models\Office $office): ?array
+    {
+        $hasLocationInput = isset($data['latitude']) || isset($data['longitude']) || isset($data['accuracy']) || isset($data['position_timestamp']);
+        $hasCoordinates = isset($data['latitude'], $data['longitude'], $data['accuracy']);
+
+        if (($required || $hasLocationInput) && ! $hasCoordinates) {
+            throw ValidationException::withMessages([
+                'location' => ['Location is required for this attendance mode.'],
+            ]);
+        }
+
+        if (($required || $hasLocationInput) && ! isset($data['position_timestamp'])) {
+            throw ValidationException::withMessages([
+                'position_timestamp' => ['A current location timestamp is required. Refresh your location and try again.'],
+            ]);
+        }
+
+        if (! $required && ! $hasLocationInput) {
+            return null;
+        }
+
+        return $mode === 'wfh'
+            ? $this->locations->verifyGps($office, $data)
+            : $this->locations->verify($office, $data);
     }
 
 }

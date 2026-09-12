@@ -101,7 +101,15 @@ export default function DashboardPage() {
           attendanceId: attendance.id,
         });
       } catch (error) {
-        if (error instanceof ApiError && [403, 409].includes(error.status)) {
+        const terminalTrackingError = error instanceof ApiError && (
+          [403, 409].includes(error.status)
+          || (error.status === 422 && (
+            error.code === "tracking_office_unavailable"
+            || Boolean(error.fieldErrors?.office)
+          ))
+        );
+        if (terminalTrackingError) {
+          setTrackingEnabled(false);
           const status = await trackingStatus().catch(() => null);
           setTrackingEnabled(Boolean(status?.active));
         }

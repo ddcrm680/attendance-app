@@ -515,5 +515,5 @@ class WhatsAppNotificationTest extends TestCase
         return Attendance::create(['employee_id' => $employee->id, 'office_id' => $employee->office_id, 'attendance_date' => '2026-04-06', 'check_in' => Carbon::parse('2026-04-06 09:00:00'), 'status' => 'present']);
     }
 
-    private function location(): array { return ['latitude' => 28.6139, 'longitude' => 77.2090, 'accuracy' => 10, 'photo' => UploadedFile::fake()->image('selfie.jpg', 480, 480)]; }
+    private function location(): array { return ['latitude' => 28.6139, 'longitude' => 77.2090, 'accuracy' => 10, 'position_timestamp' => now()->valueOf(), 'photo' => UploadedFile::fake()->image('selfie.jpg', 480, 480)]; }
 }

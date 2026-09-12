@@ -89,6 +89,6 @@ class AttendancePhotoTest extends TestCase
         return Employee::create(['employee_code' => $code.'-'.uniqid(), 'name' => $code, 'email' => strtolower($code).uniqid().'@example.test', 'mobile' => '9'.str_pad((string) random_int(1, 999999999), 9, '0', STR_PAD_LEFT), 'password' => 'password', 'role' => $role, 'department_id' => $department->id, 'office_id' => $office->id]);
     }
 
-    private function location(array $extra = []): array { return array_merge(['latitude' => 28.6139, 'longitude' => 77.2090, 'accuracy' => 10], $extra); }
+    private function location(array $extra = []): array { return array_merge(['latitude' => 28.6139, 'longitude' => 77.2090, 'accuracy' => 10, 'position_timestamp' => now()->valueOf()], $extra); }
     private function photo(): UploadedFile { return UploadedFile::fake()->image('fresh-selfie.jpg', 480, 480); }
 }

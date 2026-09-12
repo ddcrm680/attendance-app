@@ -18,7 +18,7 @@ class LocationUpdateRequest extends FormRequest
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'accuracy' => ['required', 'numeric', 'min:0', 'max:10000'],
             // Browser GeolocationPosition.timestamp in Unix milliseconds; never used as attendance time.
-            'position_timestamp' => ['nullable', 'integer', 'min:0'],
+            'position_timestamp' => ['required', 'integer', 'min:0'],
             // Ignored for identity; when supplied it must match the caller's open session.
             'attendance_id' => ['nullable', 'integer', 'min:1'],
         ];

@@ -28,12 +28,56 @@ class GpsGeofenceTest extends TestCase
         $this->assertDatabaseHas('location_logs', ['employee_id' => $employee->id, 'attendance_id' => $attendance->id, 'latitude' => 28.6139, 'accuracy' => 10]);
     }
 
-    public function test_invalid_coordinates_and_accuracy_are_rejected_server_side(): void
+    public function test_invalid_coordinates_are_rejected_server_side(): void
+    {
+        [$employee] = $this->employee(); Sanctum::actingAs($employee);
+        $this->postJson('/api/attendance/check-in', $this->location(['latitude' => 91]))->assertUnprocessable()->assertJsonValidationErrors('latitude');
+        $this->postJson('/api/attendance/check-in', $this->location(['longitude' => 181]))->assertUnprocessable()->assertJsonValidationErrors('longitude');
+    }
+
+    public function test_office_punches_accept_and_store_poor_gps_accuracy(): void
     {
         [$employee] = $this->employee(['gps_accuracy_threshold_meters' => 20]); Sanctum::actingAs($employee);
-        $this->postJson('/api/attendance/check-in', $this->location(['latitude' => 91]))->assertUnprocessable()->assertJsonValidationErrors('latitude');
-        $this->postPhoto('/api/attendance/check-in', $this->location(['accuracy' => 21, 'photo' => $this->photo()]))->assertUnprocessable()->assertJsonValidationErrors('accuracy');
-        $this->postJson('/api/attendance/check-in', $this->location(['longitude' => 181]))->assertUnprocessable()->assertJsonValidationErrors('longitude');
+        $this->postPhoto('/api/attendance/check-in', $this->location([
+            'accuracy' => 300,
+            'photo' => $this->photo(),
+        ]))->assertCreated();
+
+        $attendance = Attendance::firstOrFail();
+        $this->assertDatabaseHas('attendance', [
+            'id' => $attendance->id,
+            'check_in_accuracy' => 300,
+        ]);
+        $this->assertDatabaseHas('location_logs', [
+            'attendance_id' => $attendance->id,
+            'accuracy' => 300,
+        ]);
+
+        $this->postPhoto('/api/attendance/check-out', $this->location([
+            'accuracy' => 150,
+            'photo' => $this->photo(),
+        ]))->assertOk();
+        $this->assertDatabaseHas('attendance', [
+            'id' => $attendance->id,
+            'check_out_accuracy' => 150,
+        ]);
+    }
+
+    public function test_required_office_gps_requires_a_current_position_timestamp(): void
+    {
+        [$employee] = $this->employee(); Sanctum::actingAs($employee);
+
+        $this->postPhoto('/api/attendance/check-in', [
+            'latitude' => 28.6139,
+            'longitude' => 77.2090,
+            'accuracy' => 10,
+            'photo' => $this->photo(),
+        ])->assertUnprocessable()->assertJsonValidationErrors('position_timestamp');
+
+        $this->postPhoto('/api/attendance/check-in', $this->location([
+            'photo' => $this->photo(),
+            'position_timestamp' => now()->addMinutes(2)->valueOf(),
+        ]))->assertUnprocessable()->assertJsonValidationErrors('position_timestamp');
     }
 
     public function test_office_mode_check_in_outside_the_assigned_radius_is_persisted_and_logged(): void
@@ -77,7 +121,7 @@ class GpsGeofenceTest extends TestCase
         [, $first] = $this->employee();
         [$employee, $assigned] = $this->employee([], 12.9716, 77.5946);
         Sanctum::actingAs($employee);
-        $this->post('/api/attendance/check-in', ['latitude' => 12.9716, 'longitude' => 77.5946, 'accuracy' => 10, 'photo' => $this->photo()])->assertCreated();
+        $this->post('/api/attendance/check-in', ['latitude' => 12.9716, 'longitude' => 77.5946, 'accuracy' => 10, 'position_timestamp' => now()->valueOf(), 'photo' => $this->photo()])->assertCreated();
         $this->assertSame($assigned->id, Attendance::first()->office_id);
         $this->assertNotSame($first->id, Attendance::first()->office_id);
     }
@@ -120,7 +164,7 @@ class GpsGeofenceTest extends TestCase
         return [$employee, $office];
     }
 
-    private function location(array $extra = []): array { return array_merge(['latitude' => 28.6139, 'longitude' => 77.2090, 'accuracy' => 10], $extra); }
+    private function location(array $extra = []): array { return array_merge(['latitude' => 28.6139, 'longitude' => 77.2090, 'accuracy' => 10, 'position_timestamp' => now()->valueOf()], $extra); }
     private function photo(): UploadedFile { return UploadedFile::fake()->image('selfie.jpg', 480, 480); }
     private function postPhoto(string $uri, array $data) { return $this->withHeader('Accept', 'application/json')->post($uri, $data); }
 }

@@ -12,11 +12,13 @@ class AttendancePunchRequest extends LocationUpdateRequest
     public function rules(): array
     {
         $locationRules = parent::rules();
-        if ($this->input('mode', 'office') === 'wfh') {
-            $locationRules['latitude'] = ['nullable', 'numeric', 'between:-90,90'];
-            $locationRules['longitude'] = ['nullable', 'numeric', 'between:-180,180'];
-            $locationRules['accuracy'] = ['nullable', 'numeric', 'min:0', 'max:10000'];
-        }
+        // Requiredness is resolved from the server-authoritative punch policy.
+        // In particular, check-out mode comes from the open attendance record,
+        // not a client-provided mode field.
+        $locationRules['latitude'] = ['nullable', 'numeric', 'between:-90,90'];
+        $locationRules['longitude'] = ['nullable', 'numeric', 'between:-180,180'];
+        $locationRules['accuracy'] = ['nullable', 'numeric', 'min:0', 'max:10000'];
+        $locationRules['position_timestamp'] = ['nullable', 'integer', 'min:0'];
         return array_merge($locationRules, [
             'mode' => ['required', 'in:office,wfh'],
             // A client timestamp/status is deliberately not accepted. The server clock is authoritative.
