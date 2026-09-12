@@ -29,6 +29,26 @@ class LiveTrackingTest extends TestCase
         $this->getJson('/api/location/tracking-status')->assertOk()->assertJsonPath('active', true)->assertJsonPath('attendance_id', $attendance->id);
     }
 
+    public function test_open_session_accepts_and_persists_tracking_outside_the_assigned_radius(): void
+    {
+        [$employee] = $this->employee(); Sanctum::actingAs($employee); $attendance = $this->checkIn();
+        LocationLog::where('attendance_id', $attendance->id)->update(['recorded_at' => now()->subMinute()]);
+
+        $this->postJson('/api/location/update', $this->location([
+            'attendance_id' => $attendance->id,
+            'latitude' => 28.7000,
+            'longitude' => 77.2090,
+        ]))->assertCreated()->assertJsonPath('location.attendance_id', $attendance->id);
+
+        $this->assertDatabaseHas('location_logs', [
+            'employee_id' => $employee->id,
+            'attendance_id' => $attendance->id,
+            'latitude' => 28.7000,
+            'longitude' => 77.2090,
+            'accuracy' => 10,
+        ]);
+    }
+
     public function test_closed_or_mismatched_sessions_cannot_receive_tracking_updates(): void
     {
         [$employee] = $this->employee(); Sanctum::actingAs($employee); $attendance = $this->checkIn();

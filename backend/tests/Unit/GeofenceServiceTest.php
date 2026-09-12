@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 
 class GeofenceServiceTest extends TestCase
 {
-    public function test_it_calculates_distance_and_respects_the_office_radius(): void
+    public function test_it_calculates_informational_distance_and_radius_comparison(): void
     {
         $office = new Office([
             'latitude' => '28.6139000',

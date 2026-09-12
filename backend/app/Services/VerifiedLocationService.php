@@ -13,7 +13,13 @@ class VerifiedLocationService
         private AttendanceSettingsResolver $settings,
     ) {}
 
-    /** @return array{latitude: float, longitude: float, accuracy: float, distance_meters: float|null} */
+    /**
+     * Verify GPS quality and attach assigned-office distance as informational
+     * attendance metadata. Office radius never controls whether a punch or live
+     * location update is accepted.
+     *
+     * @return array{latitude: float, longitude: float, accuracy: float, distance_meters: float|null}
+     */
     public function verify(Office $office, array $location): array
     {
         if ($office->status !== 'active' || ! $this->isValidOffice($office)) {
@@ -24,12 +30,6 @@ class VerifiedLocationService
 
         $verifiedLocation = $this->verifyGps($office, $location);
         $result = $this->geofence->isWithinOffice($office, $verifiedLocation['latitude'], $verifiedLocation['longitude']);
-        if (! $result['inside']) {
-            throw ValidationException::withMessages([
-                'location' => ['You are outside the allowed location.'],
-            ]);
-        }
-
         return array_merge($verifiedLocation, ['distance_meters' => $result['distance_meters']]);
     }
 
@@ -72,7 +72,6 @@ class VerifiedLocationService
     private function isValidOffice(Office $office): bool
     {
         return is_numeric($office->latitude) && (float) $office->latitude >= -90 && (float) $office->latitude <= 90
-            && is_numeric($office->longitude) && (float) $office->longitude >= -180 && (float) $office->longitude <= 180
-            && is_numeric($office->radius) && (float) $office->radius >= 10;
+            && is_numeric($office->longitude) && (float) $office->longitude >= -180 && (float) $office->longitude <= 180;
     }
 }

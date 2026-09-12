@@ -10,7 +10,7 @@ SQLite is the only database. Authentication uses Laravel Sanctum bearer tokens. 
 ## Main modules
 
 - Attendance engine: punches, working time, late/early/overtime, calendar rules, and WFH mode.
-- Location: geofence verification and open-session live location logs.
+- Location: GPS quality verification, informational office-distance metadata, and open-session live location logs.
 - Media: private attendance photos served through authorized API routes.
 - Workforce: employees, departments, offices, leave, holidays, WFH requests, and attendance settings.
 - Administration: dashboards, reports/exports, live employees, WhatsApp delivery, and audit logs.

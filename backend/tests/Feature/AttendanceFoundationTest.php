@@ -85,7 +85,7 @@ class AttendanceFoundationTest extends TestCase
             ->assertJsonPath('data.0.employee_id', $employee->id);
     }
 
-    public function test_employee_can_complete_the_existing_geofenced_attendance_flow(): void
+    public function test_employee_can_complete_the_existing_gps_recorded_attendance_flow(): void
     {
         $employee = $this->employee();
 

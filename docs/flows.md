@@ -11,7 +11,7 @@
 1. The employee chooses Office or an eligible/approved WFH mode.
 2. The frontend requests GPS and opens the fresh-selfie camera flow.
 3. The employee previews and confirms the photo.
-4. The backend validates the server date, calendar, mode/eligibility, photo, GPS accuracy, and assigned active-office geofence.
+4. The backend validates the server date, calendar, mode/eligibility, photo, and GPS quality. Assigned-office distance is recorded as metadata and never blocks a punch.
 5. The attendance transaction stores the punch and verified data.
 6. Live tracking starts only after a successful open attendance session.
 

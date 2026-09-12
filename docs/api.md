@@ -14,7 +14,7 @@ The API is served from the backend /api prefix. Login is public; all other endpo
 
 | Method | Endpoint | Access | Purpose |
 |---|---|---|---|
-| POST | /attendance/check-in | Authenticated employee | Server-validates mode, photo, GPS/geofence, calendar, and creates a punch. |
+| POST | /attendance/check-in | Authenticated employee | Server-validates mode, photo, GPS quality, and calendar; office distance is informational only. |
 | POST | /attendance/check-out | Authenticated employee | Validates the open session and finalizes attendance. |
 | GET | /attendance/today | Owner | Current employee’s attendance for the business date. |
 | GET | /attendance/history | Owner | Paginated attendance history; supports from, to, and per_page. |

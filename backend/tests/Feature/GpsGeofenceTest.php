@@ -36,11 +36,30 @@ class GpsGeofenceTest extends TestCase
         $this->postJson('/api/attendance/check-in', $this->location(['longitude' => 181]))->assertUnprocessable()->assertJsonValidationErrors('longitude');
     }
 
-    public function test_outside_location_and_client_geofence_claim_cannot_bypass_server_check(): void
+    public function test_office_mode_check_in_outside_the_assigned_radius_is_persisted_and_logged(): void
     {
         [$employee] = $this->employee(); Sanctum::actingAs($employee);
-        $this->postPhoto('/api/attendance/check-in', $this->location(['latitude' => 28.7000, 'distance_meters' => 0, 'inside' => true, 'photo' => $this->photo()]))->assertUnprocessable()->assertJsonValidationErrors('location');
-        $this->assertDatabaseCount('attendance', 0);
+        $this->postPhoto('/api/attendance/check-in', $this->location([
+            'latitude' => 28.7000,
+            'photo' => $this->photo(),
+            'position_timestamp' => now()->valueOf(),
+        ]))->assertCreated();
+
+        $attendance = Attendance::firstOrFail();
+        $this->assertDatabaseHas('attendance', [
+            'id' => $attendance->id,
+            'check_in_latitude' => 28.7000,
+            'check_in_longitude' => 77.2090,
+            'check_in_accuracy' => 10,
+        ]);
+        $this->assertGreaterThan(200, (float) $attendance->check_in_distance_meters);
+        $this->assertDatabaseHas('location_logs', [
+            'employee_id' => $employee->id,
+            'attendance_id' => $attendance->id,
+            'latitude' => 28.7000,
+            'longitude' => 77.2090,
+            'accuracy' => 10,
+        ]);
     }
 
     public function test_inactive_assigned_office_and_stale_position_are_rejected(): void
@@ -51,9 +70,6 @@ class GpsGeofenceTest extends TestCase
         $office->update(['status' => 'active']);
         $employee->refresh();
         $this->postPhoto('/api/attendance/check-in', $this->location(['photo' => $this->photo(), 'position_timestamp' => now()->subSeconds(config('attendance.max_position_age_seconds') + 1)->valueOf()]))->assertUnprocessable()->assertJsonValidationErrors('position_timestamp');
-        $office->update(['radius' => 0]);
-        $employee->refresh();
-        $this->postPhoto('/api/attendance/check-in', $this->location(['photo' => $this->photo()]))->assertUnprocessable()->assertJsonValidationErrors('office');
     }
 
     public function test_employee_uses_their_assigned_office_not_another_office(): void
@@ -66,13 +82,30 @@ class GpsGeofenceTest extends TestCase
         $this->assertNotSame($first->id, Attendance::first()->office_id);
     }
 
-    public function test_punch_out_and_location_update_are_equally_geofenced_and_owned(): void
+    public function test_office_mode_check_out_outside_the_assigned_radius_is_persisted_and_owned(): void
     {
         [$employee] = $this->employee(); Sanctum::actingAs($employee);
         $this->post('/api/attendance/check-in', $this->location(['photo' => $this->photo()]))->assertCreated();
-        $this->postPhoto('/api/attendance/check-out', $this->location(['longitude' => 77.3000, 'photo' => $this->photo()]))->assertUnprocessable()->assertJsonValidationErrors('location');
-        $this->postJson('/api/location/update', $this->location(['employee_id' => 999]))->assertStatus(202);
-        $this->assertDatabaseHas('location_logs', ['employee_id' => $employee->id]);
+        $this->postPhoto('/api/attendance/check-out', $this->location([
+            'longitude' => 77.3000,
+            'photo' => $this->photo(),
+            'position_timestamp' => now()->valueOf(),
+        ]))->assertOk();
+
+        $attendance = Attendance::firstOrFail()->refresh();
+        $this->assertDatabaseHas('attendance', [
+            'id' => $attendance->id,
+            'check_out_latitude' => 28.6139,
+            'check_out_longitude' => 77.3000,
+            'check_out_accuracy' => 10,
+        ]);
+        $this->assertGreaterThan(200, (float) $attendance->check_out_distance_meters);
+        $this->assertDatabaseHas('location_logs', [
+            'employee_id' => $employee->id,
+            'attendance_id' => $attendance->id,
+            'longitude' => 77.3000,
+            'accuracy' => 10,
+        ]);
         [$other] = $this->employee();
         $otherAttendance = Attendance::create(['employee_id' => $other->id, 'office_id' => $other->office_id, 'attendance_date' => '2026-01-01']);
         $this->getJson('/api/location/history?attendance_id='.$otherAttendance->id)->assertOk()->assertJsonCount(0);

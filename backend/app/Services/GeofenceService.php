@@ -25,8 +25,8 @@ class GeofenceService
     }
 
     /**
-     * Server-side geofence check. Never trust a frontend-only "inside/outside" flag —
-     * this is the authoritative validation referenced in the spec (section 6).
+     * Informational comparison against an office radius. Consumers must not use
+     * this result to block attendance or live location updates.
      */
     public function isWithinOffice(Office $office, float $lat, float $lng): array
     {
