@@ -9,6 +9,7 @@ import {
   type Office,
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
+import { useTheme } from "@/components/ThemeProvider";
 
 const days = [
   [1, "Monday"], [2, "Tuesday"], [3, "Wednesday"], [4, "Thursday"],
@@ -26,6 +27,7 @@ function toFormValues(setting: AttendanceSetting): FormValues {
 }
 
 export default function AdminSettingsPage() {
+  const { preference, setPreference, accent, setAccent } = useTheme();
   const [offices, setOffices] = useState<Office[]>([]);
   const [officeId, setOfficeId] = useState("");
   const [form, setForm] = useState<FormValues | null>(null);
@@ -33,6 +35,23 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [activeAccent, setActiveAccent] = useState("#3159d8");
+  const [accentError, setAccentError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const readAccent = () =>
+      setActiveAccent(
+        getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(),
+      );
+    readAccent();
+    const frame = requestAnimationFrame(readAccent);
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    media.addEventListener?.("change", readAccent);
+    return () => {
+      cancelAnimationFrame(frame);
+      media.removeEventListener?.("change", readAccent);
+    };
+  }, [accent, preference]);
 
   const loadOffices = useCallback(() => {
     setLoading(true);
@@ -88,6 +107,29 @@ export default function AdminSettingsPage() {
   return (
     <section className="space-y-5">
       <PageHeader title="Attendance settings" description="Office policies are enforced by the server." />
+      <section className="app-card grid max-w-4xl gap-4 p-4 sm:grid-cols-2" aria-labelledby="appearance-title">
+        <div className="sm:col-span-2">
+          <p className="app-eyebrow">Workspace</p>
+          <h2 id="appearance-title" className="mt-1 text-base font-semibold">Appearance</h2>
+          <p className="mt-1 text-sm text-gray-500">These preferences apply immediately in this browser.</p>
+        </div>
+        <label className="text-sm">Theme
+          <select className="app-form-select mt-1" value={preference} onChange={(event) => setPreference(event.target.value as "light" | "dark" | "system")}>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="system">System</option>
+          </select>
+        </label>
+        <div className="text-sm">
+          <span className="block">Brand accent</span>
+          <div className="mt-1 flex min-h-11 items-center gap-3">
+            <input aria-label="Brand accent color" type="color" value={activeAccent} onChange={(event) => { if (setAccent(event.target.value)) { setActiveAccent(event.target.value); setAccentError(null); } else { setAccentError("Choose a color with sufficient text contrast."); } }} className="h-11 w-14 cursor-pointer rounded border border-[var(--control-line)] bg-[var(--surface)] p-1" />
+            <output className="font-mono text-sm text-gray-600" aria-live="polite">{activeAccent.toUpperCase()}</output>
+            <button type="button" className="app-secondary-action min-h-10 px-3 text-sm" disabled={!accent} onClick={() => setAccent(null)}>Reset to default</button>
+          </div>
+          {accentError && <p role="alert" className="mt-2 text-xs text-red-700">{accentError}</p>}
+        </div>
+      </section>
       {error && <p role="alert" className="app-feedback app-feedback-error">{error}</p>}
       {notice && <p role="status" className="app-feedback app-feedback-success">{notice}</p>}
       <label className="block max-w-md text-sm">

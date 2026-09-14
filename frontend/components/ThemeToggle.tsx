@@ -3,19 +3,20 @@ import { useTheme } from "./ThemeProvider";
 
 export default function ThemeToggle() {
   const { preference, setPreference } = useTheme();
-  const dark = preference === "dark";
-  const nextMode = dark ? "System" : "Dark";
+  const nextPreference =
+    preference === "light" ? "dark" : preference === "dark" ? "system" : "light";
+  const nextMode = `${nextPreference[0].toUpperCase()}${nextPreference.slice(1)}`;
 
   return (
     <button
       type="button"
       className="theme-toggle"
-      aria-label={`Switch to ${nextMode} mode`}
-      title={`Switch to ${nextMode} mode`}
-      aria-pressed={dark}
-      onClick={() => setPreference(dark ? "system" : "dark")}
+      aria-label={`Current theme: ${preference}. Switch to ${nextMode} mode`}
+      title={`Theme: ${preference}. Switch to ${nextMode}`}
+      aria-pressed={preference === "dark"}
+      onClick={() => setPreference(nextPreference)}
     >
-      {dark ? (
+      {preference === "dark" ? (
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z" />
         </svg>
