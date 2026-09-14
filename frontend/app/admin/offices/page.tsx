@@ -1,17 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-  adminOffices,
+  adminOfficePage,
   createOffice,
   deleteOffice,
   updateOffice,
   type Office,
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
+import PaginationControls from "@/components/PaginationControls";
 
 export default function AdminOfficesPage() {
   const [offices, setOffices] = useState<Office[]>([]);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -23,18 +28,18 @@ export default function AdminOfficesPage() {
   const [editing, setEditing] = useState<Office | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  function load() {
+  const load = useCallback(() => {
     setLoading(true);
-    adminOffices()
-      .then(setOffices)
+    adminOfficePage({ page, per_page: 25, search, status: statusFilter })
+      .then((result) => { setOffices(result.data); setLastPage(result.last_page); })
       .catch((err) =>
         setError(
           err instanceof Error ? err.message : "Failed to load offices.",
         ),
       )
       .finally(() => setLoading(false));
-  }
-  useEffect(load, []);
+  }, [page, search, statusFilter]);
+  useEffect(() => { load(); }, [load]);
   function resetForm() {
     setEditing(null);
     setName("");
@@ -97,6 +102,7 @@ export default function AdminOfficesPage() {
     <div className="space-y-6">
       <div>
         <PageHeader title="Offices & geofences" className="mb-4" />
+        <div className="app-card mb-4 flex flex-col gap-2 p-3 sm:flex-row"><input className="app-form-control" placeholder="Search name or address" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} /><select className="app-form-select sm:max-w-44" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}><option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select><button type="button" className="app-secondary-action" onClick={() => { setSearch(""); setStatusFilter(""); setPage(1); }}>Clear</button></div>
         {loading && <p className="text-sm text-gray-500">Loading…</p>}
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         {!loading && (
@@ -140,6 +146,7 @@ export default function AdminOfficesPage() {
             )}
           </div>
         )}
+        <PaginationControls page={page} lastPage={lastPage} loading={loading} onPageChange={setPage} label="Office pages" />
       </div>
       <div className="app-card max-w-md p-4">
         <div className="mb-3 flex justify-between">

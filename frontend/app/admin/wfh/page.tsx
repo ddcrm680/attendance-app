@@ -14,12 +14,13 @@ export default function AdminWfhPage() {
   const [items, setItems] = useState<AdminWfhRequest[]>([]);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [search, setSearch] = useState(""); const [statusFilter, setStatusFilter] = useState(""); const [from, setFrom] = useState(""); const [to, setTo] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    adminWfhRequests({ page, per_page: 50 })
+    adminWfhRequests({ page, per_page: 25, search, status: statusFilter, from, to })
       .then((r) => { setItems(r.data); setLastPage(r.last_page); })
       .catch((e) =>
         setError(
@@ -27,7 +28,7 @@ export default function AdminWfhPage() {
         ),
       )
       .finally(() => setLoading(false));
-  }, [page]);
+  }, [page, search, statusFilter, from, to]);
   useEffect(() => {
     load();
   }, [load]);
@@ -46,6 +47,7 @@ export default function AdminWfhPage() {
         description="Review employee work-from-home requests."
         descriptionClassName="text-gray-600"
       />
+      <div className="app-card grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-5"><input className="app-form-control lg:col-span-2" placeholder="Search employee" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} /><select className="app-form-select" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="cancelled">Cancelled</option></select><input className="app-form-control" type="date" aria-label="From date" value={from} onChange={(event) => { setFrom(event.target.value); setPage(1); }} /><div className="flex gap-2"><input className="app-form-control" type="date" aria-label="To date" value={to} onChange={(event) => { setTo(event.target.value); setPage(1); }} /><button type="button" className="app-secondary-action" onClick={() => { setSearch(""); setStatusFilter(""); setFrom(""); setTo(""); setPage(1); }}>Clear</button></div></div>
       {error && (
         <p role="alert" className="rounded bg-red-50 p-3 text-sm text-red-700">
           {error}{" "}

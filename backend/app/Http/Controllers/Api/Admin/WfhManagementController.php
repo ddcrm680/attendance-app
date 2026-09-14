@@ -9,6 +9,7 @@ use App\Models\WfhRequest;
 use App\Services\AtomicWriteService;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
+use App\Http\Requests\WfhManagementIndexRequest;
 
 class WfhManagementController extends Controller
 {
@@ -28,13 +29,15 @@ class WfhManagementController extends Controller
         return response()->json($employee);
     }
 
-    public function index()
+    public function index(WfhManagementIndexRequest $request)
     {
-        return response()->json(
-            WfhRequest::with('employee:id,name,employee_code')
-                ->latest('attendance_date')
-                ->paginate(50)
-        );
+        $requests = WfhRequest::with('employee:id,name,employee_code')
+            ->when($request->filled('search'), fn ($query) => $query->whereHas('employee', fn ($employee) => $employee->where(function ($q) use ($request) { $search = $request->string('search')->toString(); $q->where('name', 'like', "%{$search}%")->orWhere('employee_code', 'like', "%{$search}%"); })))
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
+            ->when($request->filled('from'), fn ($query) => $query->whereDate('attendance_date', '>=', $request->input('from')))
+            ->when($request->filled('to'), fn ($query) => $query->whereDate('attendance_date', '<=', $request->input('to')))
+            ->latest('attendance_date')->paginate($request->input('per_page', 25))->withQueryString();
+        return response()->json($requests);
     }
 
     public function review(Request $request, WfhRequest $wfh)

@@ -17,6 +17,7 @@ class EmployeeIndexRequest extends FormRequest
             'department_id' => ['nullable', 'integer', 'exists:departments,id'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
             'status' => ['nullable', 'in:active,inactive,suspended'],
+            'wfh_eligible' => ['nullable', 'boolean'],
             'search' => ['nullable', 'string', 'max:100'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];

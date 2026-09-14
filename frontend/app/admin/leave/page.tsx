@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { adminLeaves, reviewLeave, type AdminLeaveRequest } from "@/lib/api";
+import { adminLeaves, adminLeaveTypes, reviewLeave, type AdminLeaveRequest, type AdminLeaveType } from "@/lib/api";
 import { formatDate } from "@/lib/presentation";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
@@ -10,12 +10,13 @@ export default function AdminLeavePage() {
   const [items, setItems] = useState<AdminLeaveRequest[]>([]);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [search, setSearch] = useState(""); const [statusFilter, setStatusFilter] = useState(""); const [leaveTypeFilter, setLeaveTypeFilter] = useState(""); const [from, setFrom] = useState(""); const [to, setTo] = useState(""); const [types, setTypes] = useState<AdminLeaveType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    adminLeaves({ page, per_page: 50 })
+    adminLeaves({ page, per_page: 25, search, status: statusFilter, leave_type_id: leaveTypeFilter, from, to })
       .then((r) => { setItems(r.data); setLastPage(r.last_page); })
       .catch((e) =>
         setError(
@@ -23,10 +24,11 @@ export default function AdminLeavePage() {
         ),
       )
       .finally(() => setLoading(false));
-  }, [page]);
+  }, [page, search, statusFilter, leaveTypeFilter, from, to]);
   useEffect(() => {
     load();
   }, [load]);
+  useEffect(() => { adminLeaveTypes().then(setTypes).catch(() => {}); }, []);
   async function review(id: number, status: "approved" | "rejected") {
     try {
       await reviewLeave(id, status);
@@ -42,6 +44,7 @@ export default function AdminLeavePage() {
         description="Review requests within your administrative scope."
         descriptionClassName="text-gray-600"
       />
+      <div className="app-card grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-6"><input className="app-form-control lg:col-span-2" placeholder="Search employee" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} /><select className="app-form-select" value={leaveTypeFilter} onChange={(event) => { setLeaveTypeFilter(event.target.value); setPage(1); }}><option value="">All leave types</option>{types.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}</select><select className="app-form-select" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="cancelled">Cancelled</option></select><input className="app-form-control" type="date" aria-label="From date" value={from} onChange={(event) => { setFrom(event.target.value); setPage(1); }} /><div className="flex gap-2"><input className="app-form-control" type="date" aria-label="To date" value={to} onChange={(event) => { setTo(event.target.value); setPage(1); }} /><button type="button" className="app-secondary-action" onClick={() => { setSearch(""); setStatusFilter(""); setLeaveTypeFilter(""); setFrom(""); setTo(""); setPage(1); }}>Clear</button></div></div>
       {error && (
         <p role="alert" className="rounded bg-red-50 p-3 text-sm text-red-700">
           {error}{" "}

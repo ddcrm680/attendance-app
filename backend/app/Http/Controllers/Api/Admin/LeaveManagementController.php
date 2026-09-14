@@ -9,18 +9,22 @@ use App\Models\LeaveType;
 use App\Services\AtomicWriteService;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
+use App\Http\Requests\LeaveManagementIndexRequest;
 
 class LeaveManagementController extends Controller
 {
     public function __construct(private AuditService $audit, private AtomicWriteService $writes) {}
 
-    public function index()
+    public function index(LeaveManagementIndexRequest $request)
     {
-        return response()->json(
-            LeaveRequest::with(['employee:id,name,employee_code', 'leaveType'])
-                ->latest()
-                ->paginate(50)
-        );
+        $leaves = LeaveRequest::with(['employee:id,name,employee_code', 'leaveType'])
+            ->when($request->filled('search'), fn ($query) => $query->whereHas('employee', fn ($employee) => $employee->where(function ($q) use ($request) { $search = $request->string('search')->toString(); $q->where('name', 'like', "%{$search}%")->orWhere('employee_code', 'like', "%{$search}%"); })))
+            ->when($request->filled('leave_type_id'), fn ($query) => $query->where('leave_type_id', $request->input('leave_type_id')))
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
+            ->when($request->filled('from'), fn ($query) => $query->whereDate('end_date', '>=', $request->input('from')))
+            ->when($request->filled('to'), fn ($query) => $query->whereDate('start_date', '<=', $request->input('to')))
+            ->latest()->paginate($request->input('per_page', 25))->withQueryString();
+        return response()->json($leaves);
     }
 
     public function review(Request $request, LeaveRequest $leave)

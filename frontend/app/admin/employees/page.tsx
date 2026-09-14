@@ -45,6 +45,11 @@ export default function AdminEmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [officeFilter, setOfficeFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [wfhFilter, setWfhFilter] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -60,7 +65,7 @@ export default function AdminEmployeesPage() {
 
   const load = useCallback(() => {
     setLoading(true);
-    adminEmployees({ page, per_page: 25 })
+    adminEmployees({ page, per_page: 25, search, department_id: departmentFilter, office_id: officeFilter, status: statusFilter, wfh_eligible: wfhFilter })
       .then((res) => {
         setEmployees(res.data);
         setLastPage(res.last_page);
@@ -71,7 +76,7 @@ export default function AdminEmployeesPage() {
         ),
       )
       .finally(() => setLoading(false));
-  }, [page]);
+  }, [page, search, departmentFilter, officeFilter, statusFilter, wfhFilter]);
 
   useEffect(() => {
     adminDepartments({ per_page: 100 })
@@ -204,6 +209,14 @@ export default function AdminEmployeesPage() {
     <div className="space-y-6">
       <div>
         <PageHeader title="Employees" className="mb-4" />
+
+        <div className="app-card mb-4 grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-6">
+          <input className="app-form-control lg:col-span-2" placeholder="Search name, code, or email" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} />
+          <select className="app-form-select" value={departmentFilter} onChange={(event) => { setDepartmentFilter(event.target.value); setPage(1); }}><option value="">All departments</option>{departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select>
+          <select className="app-form-select" value={officeFilter} onChange={(event) => { setOfficeFilter(event.target.value); setPage(1); }}><option value="">All offices</option>{offices.map((office) => <option key={office.id} value={office.id}>{office.name}</option>)}</select>
+          <select className="app-form-select" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}><option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option><option value="suspended">Suspended</option></select>
+          <div className="flex gap-2"><select className="app-form-select" value={wfhFilter} onChange={(event) => { setWfhFilter(event.target.value); setPage(1); }}><option value="">All WFH</option><option value="1">WFH eligible</option><option value="0">Not eligible</option></select><button type="button" className="app-secondary-action" onClick={() => { setSearch(""); setDepartmentFilter(""); setOfficeFilter(""); setStatusFilter(""); setWfhFilter(""); setPage(1); }}>Clear</button></div>
+        </div>
 
         {loading && <p className="text-sm text-gray-500">Loading…</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}

@@ -27,6 +27,9 @@ class EmployeeController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
         }
+        if ($request->has('wfh_eligible')) {
+            $query->where('wfh_eligible', $request->boolean('wfh_eligible'));
+        }
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -36,7 +39,7 @@ class EmployeeController extends Controller
             });
         }
 
-        return response()->json($query->paginate($request->input('per_page', 25)));
+        return response()->json($query->paginate($request->input('per_page', 25))->withQueryString());
     }
 
     public function show(Employee $employee)

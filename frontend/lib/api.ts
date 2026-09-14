@@ -542,6 +542,13 @@ export function adminOffices() {
   return apiFetch<Office[]>("/admin/offices");
 }
 
+export function adminOfficePage(
+  params: Record<string, string | number | undefined> = {},
+) {
+  const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined && value !== "").map(([key, value]) => [key, String(value)])).toString();
+  return apiFetch<Paginated<Office>>(`/admin/offices?${query}`);
+}
+
 export type AttendanceSetting = {
   id: number;
   office_id: number | null;
