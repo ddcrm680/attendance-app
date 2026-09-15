@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminAttendanceSetting, adminOffices, updateAdminAttendanceSetting, type AttendanceSetting, type Office } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
+import AppLoading from "@/components/AppLoading";
 import { useTheme } from "@/components/ThemeProvider";
 
 const days = [[1, "Monday"], [2, "Tuesday"], [3, "Wednesday"], [4, "Thursday"], [5, "Friday"], [6, "Saturday"], [7, "Sunday"]] as const;
@@ -81,7 +82,7 @@ export default function AdminSettingsPage() {
         </section>}
         {error && <p role="alert" className="app-feedback app-feedback-error">{error}</p>}
         {notice && <p role="status" className="app-feedback app-feedback-success">{notice}</p>}
-        {loading && activeCategory !== "appearance" && <p role="status" className="app-muted text-sm">Loading settings…</p>}
+        {loading && activeCategory !== "appearance" && <AppLoading variant="inline" message="Loading settings…" />}
         {form && !loading && activeCategory !== "appearance" && <form onSubmit={submit} className="settings-policy-form">
           {activeCategory === "attendance" && <><AttendanceSettings form={form} offices={offices} officeId={officeId} setOfficeId={setOfficeId} setValue={setValue} /><LocationSettings form={form} setValue={setValue} /><WfhSettings form={form} setValue={setValue} /></>}
           <button type="submit" disabled={saving} className="app-primary-action min-h-10 self-start px-4 text-sm disabled:opacity-50">{saving ? "Saving…" : "Save settings"}</button>

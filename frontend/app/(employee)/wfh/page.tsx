@@ -12,6 +12,7 @@ import {
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import PaginationControls from "@/components/PaginationControls";
+import AppLoading from "@/components/AppLoading";
 
 function localDateInputValue(date = new Date()): string {
   const parts = new Intl.DateTimeFormat(undefined, {
@@ -78,12 +79,7 @@ export default function WfhPage() {
       );
     }
   }
-  if (loading)
-    return (
-      <p className="text-sm text-gray-500" role="status">
-        Loading WFH status…
-      </p>
-    );
+  if (loading) return <AppLoading message="Loading WFH status…" />;
   return (
     <section className="space-y-4">
       <PageHeader

@@ -14,6 +14,7 @@ import {
   type Employee,
 } from "@/lib/api";
 import SelfieCapture from "@/components/SelfieCapture";
+import AppLoading from "@/components/AppLoading";
 import { useLiveLocationTracking } from "@/hooks/useLiveLocationTracking";
 import { formatMode, formatStatus } from "@/lib/presentation";
 
@@ -361,7 +362,7 @@ export default function DashboardPage() {
           )}
         </div>
         {attendanceLoading ? (
-          <p className="mt-3 text-sm text-gray-500" role="status">Loading today’s attendance…</p>
+          <AppLoading variant="inline" message="Loading today’s attendance…" />
         ) : attendance ? (
           <div className="attendance-summary-grid mt-3">
             <div>

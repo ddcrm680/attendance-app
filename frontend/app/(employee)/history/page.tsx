@@ -10,6 +10,7 @@ import {
 } from "@/lib/presentation";
 import StatusBadge from "@/components/StatusBadge";
 import PageHeader from "@/components/PageHeader";
+import AppLoading from "@/components/AppLoading";
 export default function HistoryPage() {
   const [records, setRecords] = useState<Attendance[]>([]);
   const [from, setFrom] = useState("");
@@ -68,7 +69,7 @@ export default function HistoryPage() {
           />
         </label>
       </div>
-      {loading && <p className="text-sm text-gray-500">Loading attendance…</p>}
+      {loading && <AppLoading variant="inline" message="Loading attendance…" />}
       {error && (
         <div className="app-feedback app-feedback-error">
           {error}

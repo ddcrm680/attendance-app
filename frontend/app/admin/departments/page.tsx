@@ -9,6 +9,7 @@ import {
   type Department,
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
+import AppLoading from "@/components/AppLoading";
 
 export default function AdminDepartmentsPage() {
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -79,7 +80,7 @@ export default function AdminDepartmentsPage() {
     <div className="space-y-6">
       <div>
         <PageHeader title="Departments" className="mb-4" />
-        {loading && <p className="text-sm text-gray-500">Loading…</p>}
+        {loading && <AppLoading variant="inline" message="Loading departments…" />}
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         {!loading && (
           <div className="app-card overflow-hidden">

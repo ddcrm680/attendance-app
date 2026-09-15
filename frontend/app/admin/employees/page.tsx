@@ -16,6 +16,7 @@ import {
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import PaginationControls from "@/components/PaginationControls";
+import AppLoading from "@/components/AppLoading";
 
 const blankForm = {
   employee_code: "",
@@ -218,7 +219,7 @@ export default function AdminEmployeesPage() {
           <div className="flex gap-2"><select className="app-form-select" value={wfhFilter} onChange={(event) => { setWfhFilter(event.target.value); setPage(1); }}><option value="">All WFH</option><option value="1">WFH eligible</option><option value="0">Not eligible</option></select><button type="button" className="app-secondary-action" onClick={() => { setSearch(""); setDepartmentFilter(""); setOfficeFilter(""); setStatusFilter(""); setWfhFilter(""); setPage(1); }}>Clear</button></div>
         </div>
 
-        {loading && <p className="text-sm text-gray-500">Loading…</p>}
+        {loading && <AppLoading variant="inline" message="Loading employees…" />}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {!loading && !error && (

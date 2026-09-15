@@ -11,6 +11,7 @@ import {
   formatTime,
 } from "@/lib/presentation";
 import StatusBadge from "@/components/StatusBadge";
+import AppLoading from "@/components/AppLoading";
 
 export default function AdminAttendanceDetail({
   params,
@@ -41,12 +42,7 @@ export default function AdminAttendanceDetail({
         </button>
       </div>
     );
-  if (!attendance)
-    return (
-      <p className="text-sm text-gray-500" role="status">
-        Loading attendance details…
-      </p>
-    );
+  if (!attendance) return <AppLoading message="Loading attendance details…" />;
   const point = (
     label: string,
     latitude?: string | null,

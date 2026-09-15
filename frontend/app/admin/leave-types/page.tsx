@@ -8,6 +8,7 @@ import {
   type AdminLeaveType,
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
+import AppLoading from "@/components/AppLoading";
 
 export default function AdminLeaveTypesPage() {
   const [types, setTypes] = useState<AdminLeaveType[]>([]);
@@ -59,7 +60,7 @@ export default function AdminLeaveTypesPage() {
     <section className="space-y-5">
       <PageHeader title="Leave types" description="Manage the leave types available to employees." />
       {error && <p role="alert" className="app-feedback app-feedback-error">{error}</p>}
-      {loading ? <p role="status" className="text-sm text-gray-500">Loading leave types…</p> : (
+      {loading ? <AppLoading variant="inline" message="Loading leave types…" /> : (
         <div className="space-y-2">
           {types.map((type) => <article key={type.id} className="app-card flex items-center justify-between gap-3 p-3 text-sm"><div><p className="font-medium">{type.name}</p><p className="text-xs text-gray-500">{type.active ? "Active" : "Inactive"} · {type.reason_required ? "Reason required" : "Reason optional"}</p></div><button type="button" className="app-secondary-action min-h-10 rounded px-3 text-sm" onClick={() => { setEditing(type); setName(type.name); setActive(type.active); setReasonRequired(type.reason_required); }}>Edit</button></article>)}
           {!types.length && <p className="app-empty-state text-sm">No leave types yet.</p>}

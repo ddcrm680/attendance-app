@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { me, type Employee } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import AppLoading from "@/components/AppLoading";
 
 type Props = {
   allowed?: Employee["role"][];
@@ -33,11 +34,6 @@ export default function RoleGate({ allowed, fallback, children }: Props) {
     };
   }, [allowedKey, fallback, router]);
 
-  if (!user)
-    return (
-      <main className="p-6 text-sm text-gray-500" role="status">
-        Loading account…
-      </main>
-    );
+  if (!user) return <AppLoading message="Loading account…" />;
   return <>{typeof children === "function" ? children(user) : children}</>;
 }

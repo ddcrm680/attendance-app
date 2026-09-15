@@ -9,6 +9,7 @@ import {
   type Employee,
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
+import AppLoading from "@/components/AppLoading";
 
 export default function AdminAuditPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -177,7 +178,7 @@ export default function AdminAuditPage() {
           </tbody>
         </table>
         {loading && (
-          <p className="p-4 text-sm text-gray-500">Loading audit events…</p>
+          <AppLoading variant="inline" message="Loading audit events…" />
         )}
         {!loading && !logs.length && (
           <p className="p-4 text-sm text-gray-500">

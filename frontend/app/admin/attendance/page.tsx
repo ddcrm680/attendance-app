@@ -16,6 +16,7 @@ import {
 import { formatDate, formatDuration, formatMode } from "@/lib/presentation";
 import StatusBadge from "@/components/StatusBadge";
 import PageHeader from "@/components/PageHeader";
+import AppLoading from "@/components/AppLoading";
 
 const controlClass =
   "min-h-10 rounded border border-slate-300 bg-white px-3 text-sm text-slate-900";
@@ -339,9 +340,7 @@ export default function AdminAttendance() {
           </p>
         ) : null}
         {loading ? (
-          <p className="p-4 text-sm text-slate-500" role="status">
-            Loading attendance…
-          </p>
+          <AppLoading variant="inline" message="Loading attendance…" />
         ) : null}
       </div>
 

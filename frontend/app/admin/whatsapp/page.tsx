@@ -12,6 +12,7 @@ import {
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import PaginationControls from "@/components/PaginationControls";
+import AppLoading from "@/components/AppLoading";
 
 const FAILURE_PREVIEW_LENGTH = 180;
 
@@ -293,9 +294,7 @@ export default function WhatsAppAdminPage() {
         </p>
       )}
       {loading && (
-        <p className="app-card p-4 text-sm text-gray-500">
-          Loading delivery logs…
-        </p>
+        <AppLoading variant="inline" message="Loading delivery logs…" />
       )}
       <PaginationControls page={page} lastPage={lastPage} loading={loading} onPageChange={setPage} label="WhatsApp log pages" />
     </section>

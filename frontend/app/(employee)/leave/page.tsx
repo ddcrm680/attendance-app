@@ -11,6 +11,7 @@ import {
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import PaginationControls from "@/components/PaginationControls";
+import AppLoading from "@/components/AppLoading";
 
 type Feedback = { tone: "success" | "error"; text: string };
 
@@ -119,7 +120,7 @@ export default function LeavePage() {
         </p>
       )}
       <div className="space-y-2">
-        {loading && <p role="status" className="text-sm text-gray-500">Loading leave requests…</p>}
+        {loading && <AppLoading variant="inline" message="Loading leave requests…" />}
         {leaves.map((l) => (
           <div key={l.id} className="app-card p-3 text-sm sm:p-4">
             <p className="flex items-center gap-1 font-medium">

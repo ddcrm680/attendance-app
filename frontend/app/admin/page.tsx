@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { adminDashboard, adminDashboardCharts } from "@/lib/api";
 import StatCard from "@/components/StatCard";
 import PageHeader from "@/components/PageHeader";
+import AppLoading from "@/components/AppLoading";
 import { formatDate, formatDuration } from "@/lib/presentation";
 
 type Stats = Awaited<ReturnType<typeof adminDashboard>>;
@@ -31,7 +32,7 @@ export default function AdminDashboardPage() {
   }, []);
 
   if (error) return <p className="text-sm text-red-600">{error}</p>;
-  if (!stats) return <p className="text-sm text-gray-500">Loading…</p>;
+  if (!stats) return <AppLoading message="Loading dashboard…" />;
 
   return (
     <div className="app-page">

@@ -10,6 +10,7 @@ import {
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import PaginationControls from "@/components/PaginationControls";
+import AppLoading from "@/components/AppLoading";
 
 export default function AdminOfficesPage() {
   const [offices, setOffices] = useState<Office[]>([]);
@@ -103,7 +104,7 @@ export default function AdminOfficesPage() {
       <div>
         <PageHeader title="Offices & geofences" className="mb-4" />
         <div className="app-card mb-4 flex flex-col gap-2 p-3 sm:flex-row"><input className="app-form-control" placeholder="Search name or address" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} /><select className="app-form-select sm:max-w-44" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}><option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select><button type="button" className="app-secondary-action" onClick={() => { setSearch(""); setStatusFilter(""); setPage(1); }}>Clear</button></div>
-        {loading && <p className="text-sm text-gray-500">Loading…</p>}
+        {loading && <AppLoading variant="inline" message="Loading offices…" />}
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         {!loading && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

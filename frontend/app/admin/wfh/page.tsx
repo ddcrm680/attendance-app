@@ -9,6 +9,7 @@ import { formatDate } from "@/lib/presentation";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import PaginationControls from "@/components/PaginationControls";
+import AppLoading from "@/components/AppLoading";
 
 export default function AdminWfhPage() {
   const [items, setItems] = useState<AdminWfhRequest[]>([]);
@@ -57,9 +58,7 @@ export default function AdminWfhPage() {
         </p>
       )}
       {loading ? (
-        <p role="status" className="text-sm text-gray-500">
-          Loading WFH requests…
-        </p>
+        <AppLoading variant="inline" message="Loading WFH requests…" />
       ) : (
         <div className="overflow-x-auto rounded border bg-white">
           <table className="w-full min-w-[600px] text-left text-sm">

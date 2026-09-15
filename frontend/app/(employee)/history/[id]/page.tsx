@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import SecureAttendancePhoto from "@/components/SecureAttendancePhoto";
 import PageHeader from "@/components/PageHeader";
+import AppLoading from "@/components/AppLoading";
 import { attendanceDetail, type Attendance } from "@/lib/api";
 import {
   formatDate,
@@ -42,12 +43,7 @@ export default function AttendanceDetail({
         </button>
       </div>
     );
-  if (!attendance)
-    return (
-      <p className="text-sm text-gray-500" role="status">
-        Loading attendance details…
-      </p>
-    );
+  if (!attendance) return <AppLoading message="Loading attendance details…" />;
   return (
     <div className="space-y-4">
       <Link href="/history" className="text-sm underline">

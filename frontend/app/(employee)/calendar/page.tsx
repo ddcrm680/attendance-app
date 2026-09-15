@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { calendarOverview, type CalendarOverview } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
+import AppLoading from "@/components/AppLoading";
 
 export default function CalendarPage() {
   const [calendar, setCalendar] = useState<CalendarOverview | null>(null);
@@ -27,12 +28,7 @@ export default function CalendarPage() {
         </button>
       </div>
     );
-  if (!calendar)
-    return (
-      <p className="text-sm text-gray-500" role="status">
-        Loading calendar…
-      </p>
-    );
+  if (!calendar) return <AppLoading message="Loading calendar…" />;
   return (
     <section className="space-y-4">
       <PageHeader

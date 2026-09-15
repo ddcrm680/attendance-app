@@ -8,6 +8,7 @@ import {
   type Holiday,
 } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
+import AppLoading from "@/components/AppLoading";
 
 export default function AdminHolidaysPage() {
   const [items, setItems] = useState<Holiday[]>([]);
@@ -95,9 +96,7 @@ export default function AdminHolidaysPage() {
         <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} /> Active</label>
       </form>
       {loading ? (
-        <p role="status" className="text-sm text-gray-500">
-          Loading holidays…
-        </p>
+        <AppLoading variant="inline" message="Loading holidays…" />
       ) : (
         <div className="space-y-2">
           {items.map((item) => (
