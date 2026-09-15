@@ -8,6 +8,7 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\LocationLog;
 use App\Models\Office;
+use App\Services\GeofenceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -87,9 +88,27 @@ class LiveTrackingTest extends TestCase
         [$employee] = $this->employee(); Sanctum::actingAs($employee); $attendance = $this->checkIn();
         LocationLog::create(['employee_id' => $employee->id, 'attendance_id' => $attendance->id, 'latitude' => 28.6140, 'longitude' => 77.2090, 'accuracy' => 8, 'recorded_at' => now()->addSecond()]);
         [$admin] = $this->employee('ADMIN', 'hr_admin'); Sanctum::actingAs($admin);
-        $this->getJson('/api/admin/live-employees')->assertOk()->assertJsonCount(1)->assertJsonPath('0.employee_id', $employee->id)->assertJsonPath('0.last_location.latitude', 28.614)->assertJsonPath('0.last_location.accuracy', 8);
+        $expectedDistance = round((new GeofenceService())->distanceMeters(28.6139, 77.2090, 28.6140, 77.2090), 2);
+        $this->getJson('/api/admin/live-employees')->assertOk()->assertJsonCount(1)->assertJsonPath('0.employee_id', $employee->id)->assertJsonPath('0.last_location.latitude', 28.614)->assertJsonPath('0.last_location.accuracy', 8)->assertJsonPath('0.current_distance_meters', $expectedDistance);
         $attendance->update(['check_out' => now()]);
         $this->getJson('/api/admin/live-employees')->assertOk()->assertJsonCount(0);
+    }
+
+    public function test_admin_live_feed_returns_null_distance_without_a_location_or_for_wfh(): void
+    {
+        [$officeEmployee] = $this->employee('OFFICE');
+        $officeAttendance = Attendance::create(['employee_id' => $officeEmployee->id, 'office_id' => $officeEmployee->office_id, 'mode' => 'office', 'attendance_date' => '2026-01-01', 'check_in' => now()]);
+        [$wfhEmployee] = $this->employee('WFH');
+        $wfhAttendance = Attendance::create(['employee_id' => $wfhEmployee->id, 'office_id' => $wfhEmployee->office_id, 'mode' => 'wfh', 'attendance_date' => '2026-01-01', 'check_in' => now()]);
+        LocationLog::create(['employee_id' => $wfhEmployee->id, 'attendance_id' => $wfhAttendance->id, 'latitude' => 28.6140, 'longitude' => 77.2090, 'accuracy' => 8, 'recorded_at' => now()]);
+
+        [$admin] = $this->employee('ADMIN', 'hr_admin'); Sanctum::actingAs($admin);
+
+        $this->getJson('/api/admin/live-employees')
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonFragment(['attendance_id' => $officeAttendance->id, 'current_distance_meters' => null])
+            ->assertJsonFragment(['attendance_id' => $wfhAttendance->id, 'current_distance_meters' => null]);
     }
 
     public function test_employee_cannot_access_admin_live_feed_or_track_anothers_session(): void

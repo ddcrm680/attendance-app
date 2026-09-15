@@ -189,7 +189,9 @@ export type LiveEmployee = {
   office: string | null;
   attendance_id: number;
   check_in: string;
+  mode: "office" | "wfh";
   status: "working";
+  current_distance_meters: number | null;
   last_location: {
     latitude: number;
     longitude: number;

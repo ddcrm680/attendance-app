@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
+use App\Services\GeofenceService;
 use Illuminate\Support\Carbon;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private GeofenceService $geofence,
+    ) {}
+
     public function stats()
     {
         $today = Carbon::today()->toDateString();
@@ -63,13 +68,27 @@ class DashboardController extends Controller
                 $join->on('latest_location.attendance_id', '=', 'attendance.id')
                     ->whereRaw('latest_location.id = (select id from location_logs where attendance_id = attendance.id order by recorded_at desc, id desc limit 1)');
             })
-            ->with(['employee:id,name,employee_code,office_id', 'office:id,name'])
+            ->with(['employee:id,name,employee_code,office_id', 'office:id,name,latitude,longitude'])
             ->whereNotNull('check_in')
             ->whereNull('check_out')
             ->whereHas('office', fn ($query) => $query->where('status', 'active'))
             ->orderBy('attendance.check_in')
             ->get()
             ->map(function (Attendance $attendance) {
+                $hasLiveLocation = $attendance->live_latitude !== null && $attendance->live_longitude !== null;
+                $office = $attendance->office;
+                $hasOfficeCoordinates = $office
+                    && is_numeric($office->latitude)
+                    && is_numeric($office->longitude);
+                $currentDistance = $attendance->mode !== 'wfh' && $hasLiveLocation && $hasOfficeCoordinates
+                    ? round($this->geofence->distanceMeters(
+                        (float) $office->latitude,
+                        (float) $office->longitude,
+                        (float) $attendance->live_latitude,
+                        (float) $attendance->live_longitude,
+                    ), 2)
+                    : null;
+
                 return [
                     'employee_id' => $attendance->employee_id,
                     'name' => $attendance->employee->name,
@@ -77,7 +96,9 @@ class DashboardController extends Controller
                     'office' => $attendance->office?->name,
                     'attendance_id' => $attendance->id,
                     'check_in' => $attendance->check_in,
-                    'last_location' => $attendance->live_latitude !== null ? [
+                    'mode' => $attendance->mode,
+                    'current_distance_meters' => $currentDistance,
+                    'last_location' => $hasLiveLocation ? [
                         'latitude' => (float) $attendance->live_latitude,
                         'longitude' => (float) $attendance->live_longitude,
                         'accuracy' => (float) $attendance->live_accuracy,

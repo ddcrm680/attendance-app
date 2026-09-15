@@ -24,7 +24,7 @@ export function formatDateTime(value: string | null | undefined): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? value
-    : `${formatDate(value)} ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    : `${formatDate(value)} · ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 }
 
 export function formatTime(value: string | null | undefined): string {
