@@ -16,15 +16,7 @@ import {
 import SelfieCapture from "@/components/SelfieCapture";
 import AppLoading from "@/components/AppLoading";
 import { useLiveLocationTracking } from "@/hooks/useLiveLocationTracking";
-import { formatMode, formatStatus } from "@/lib/presentation";
-
-function formatTime(iso: string | null) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { formatDateTime, formatMode, formatStatus } from "@/lib/presentation";
 
 export default function DashboardPage() {
   const [attendance, setAttendance] = useState<Attendance | null>(null);
@@ -367,11 +359,15 @@ export default function DashboardPage() {
           <div className="attendance-summary-grid mt-3">
             <div>
               <p>Check-in</p>
-              <strong>{formatTime(attendance.check_in)}</strong>
+              <strong>{formatDateTime(attendance.check_in)}</strong>
             </div>
             <div>
               <p>Check-out</p>
-              <strong>{formatTime(attendance.check_out)}</strong>
+              <strong>
+                {attendance.check_out
+                  ? formatDateTime(attendance.check_out)
+                  : "Not checked out"}
+              </strong>
             </div>
             <div>
               <p>Status</p>

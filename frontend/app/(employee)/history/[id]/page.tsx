@@ -8,11 +8,11 @@ import AppLoading from "@/components/AppLoading";
 import { attendanceDetail, type Attendance } from "@/lib/api";
 import {
   formatDate,
+  formatDateTime,
   formatDuration,
   formatMode,
   formatOfficeDistance,
   formatStatus,
-  formatTime,
 } from "@/lib/presentation";
 
 export default function AttendanceDetail({
@@ -62,8 +62,11 @@ export default function AttendanceDetail({
           <b>Office:</b> {attendance.office?.name ?? "—"}
         </p>
         <p>
-          <b>Check-in:</b> {formatTime(attendance.check_in)}{" "}
-          <b className="ml-2">Check-out:</b> {formatTime(attendance.check_out)}
+          <b>Check-in:</b> {formatDateTime(attendance.check_in)}{" "}
+          <b className="ml-2">Check-out:</b>{" "}
+          {attendance.check_out
+            ? formatDateTime(attendance.check_out)
+            : "Not checked out"}
         </p>
         <p>
           <b>Working:</b> {formatDuration(attendance.working_minutes)}

@@ -6,10 +6,10 @@ import SecureAttendancePhoto from "@/components/SecureAttendancePhoto";
 import { adminAttendanceDetail, type Attendance } from "@/lib/api";
 import {
   formatDate,
+  formatDateTime,
   formatDuration,
   formatMode,
   formatOfficeDistance,
-  formatTime,
 } from "@/lib/presentation";
 import StatusBadge from "@/components/StatusBadge";
 import AppLoading from "@/components/AppLoading";
@@ -102,8 +102,10 @@ export default function AdminAttendanceDetail({
           <b>Overtime:</b> {formatDuration(attendance.overtime_minutes)}
         </p>
         <p>
-          <b>Check-in:</b> {formatTime(attendance.check_in)} · <b>Check-out:</b>{" "}
-          {formatTime(attendance.check_out)}
+          <b>Check-in:</b> {formatDateTime(attendance.check_in)} · <b>Check-out:</b>{" "}
+          {attendance.check_out
+            ? formatDateTime(attendance.check_out)
+            : "Not checked out"}
         </p>
       </section>
       <section className="grid gap-4 md:grid-cols-2">

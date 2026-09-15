@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { attendanceHistory, type Attendance } from "@/lib/api";
 import {
   formatDate,
+  formatDateTime,
   formatDuration,
   formatMode,
-  formatTime,
 } from "@/lib/presentation";
 import StatusBadge from "@/components/StatusBadge";
 import PageHeader from "@/components/PageHeader";
@@ -95,8 +95,11 @@ export default function HistoryPage() {
               <StatusBadge status={r.status} />
             </div>
             <p className="mt-2 text-sm text-gray-600">
-              {formatMode(r.mode)} · {formatTime(r.check_in)} –{" "}
-              {formatTime(r.check_out)}
+              {formatMode(r.mode)} · Check-in {formatDateTime(r.check_in)}
+              <span className="block">
+                Check-out{" "}
+                {r.check_out ? formatDateTime(r.check_out) : "Not checked out"}
+              </span>
             </p>
             <p className="text-xs text-gray-500">
               {r.working_minutes
