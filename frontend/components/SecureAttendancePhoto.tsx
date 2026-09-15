@@ -29,12 +29,12 @@ export default function SecureAttendancePhoto({
   }, [attendanceId, punch]);
   return src ? (
     <img
-      className="aspect-square rounded-xl object-cover"
+      className="attendance-detail-photo"
       alt={alt}
       src={src}
     />
   ) : (
-    <div className="aspect-square rounded-xl bg-gray-100 p-3 text-xs text-gray-500">
+    <div className="attendance-detail-photo-unavailable">
       Photo unavailable
     </div>
   );

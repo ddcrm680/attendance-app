@@ -2,24 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import SecureAttendancePhoto from "@/components/SecureAttendancePhoto";
-import PageHeader from "@/components/PageHeader";
+import AttendanceDetailRecord from "@/components/AttendanceDetailRecord";
 import AppLoading from "@/components/AppLoading";
+import PageHeader from "@/components/PageHeader";
 import { attendanceDetail, type Attendance } from "@/lib/api";
-import {
-  formatDate,
-  formatDateTime,
-  formatDuration,
-  formatMode,
-  formatOfficeDistance,
-  formatStatus,
-} from "@/lib/presentation";
+import { formatDate, formatMode } from "@/lib/presentation";
 
-export default function AttendanceDetail({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function AttendanceDetail({ params }: { params: { id: string } }) {
   const [attendance, setAttendance] = useState<Attendance | null>(null);
   const [error, setError] = useState<string | null>(null);
   const load = () =>
@@ -27,89 +16,38 @@ export default function AttendanceDetail({
       .then(setAttendance)
       .catch((cause) =>
         setError(
-          cause instanceof Error
-            ? cause.message
-            : "Unable to load attendance details.",
+          cause instanceof Error ? cause.message : "Unable to load attendance details.",
         ),
       );
+
   useEffect(() => {
     load();
   }, [params.id]);
-  if (error)
+
+  if (error) {
     return (
-      <div className="space-y-2 text-sm text-red-700">
-        {error}
-        <button onClick={load} className="block underline">
+      <div role="alert" className="app-feedback app-feedback-error">
+        {error}{" "}
+        <button type="button" className="attendance-detail-retry" onClick={load}>
           Retry
         </button>
       </div>
     );
+  }
+
   if (!attendance) return <AppLoading message="Loading attendance details…" />;
+
   return (
-    <div className="space-y-4">
-      <Link href="/history" className="text-sm underline">
+    <div className="attendance-detail-page">
+      <Link href="/history" className="attendance-detail-back">
         ← Back to attendance history
       </Link>
       <PageHeader
+        eyebrow="Your attendance record"
         title="Attendance detail"
-        description={`${formatDate(attendance.attendance_date)} · ${formatStatus(attendance.status)}`}
+        description={`${formatDate(attendance.attendance_date)} · ${formatMode(attendance.mode)} · ${attendance.office?.name ?? "No office"}`}
       />
-      <section className="app-card space-y-2 p-4 text-sm">
-        <p>
-          <b>Mode:</b> {formatMode(attendance.mode)}
-        </p>
-        <p>
-          <b>Office:</b> {attendance.office?.name ?? "—"}
-        </p>
-        <p>
-          <b>Check-in:</b> {formatDateTime(attendance.check_in)}{" "}
-          <b className="ml-2">Check-out:</b>{" "}
-          {attendance.check_out
-            ? formatDateTime(attendance.check_out)
-            : "Not checked out"}
-        </p>
-        <p>
-          <b>Working:</b> {formatDuration(attendance.working_minutes)}
-        </p>
-        <p>
-          <b>Late:</b> {formatDuration(attendance.late_minutes)}{" "}
-          <b className="ml-2">Early departure:</b>{" "}
-          {formatDuration(attendance.early_departure_minutes)}
-        </p>
-        <p>
-          <b>Overtime:</b> {formatDuration(attendance.overtime_minutes)}
-        </p>
-        <p>
-          <b>GPS accuracy:</b>{" "}
-          {attendance.check_in_accuracy
-            ? `${attendance.check_in_accuracy}m at check-in`
-            : "Not required"}
-        </p>
-        <p>
-          <b>Distance from assigned office:</b>{" "}
-          {formatOfficeDistance(attendance.check_in_distance_meters, attendance.mode)} at check-in
-        </p>
-        <p>
-          <b>Distance from assigned office:</b>{" "}
-          {formatOfficeDistance(attendance.check_out_distance_meters, attendance.mode)} at check-out
-        </p>
-      </section>
-      <section className="grid grid-cols-2 gap-3">
-        {attendance.check_in && (
-          <SecureAttendancePhoto
-            attendanceId={attendance.id}
-            punch="check_in"
-            alt="Verified punch-in selfie"
-          />
-        )}
-        {attendance.check_out && (
-          <SecureAttendancePhoto
-            attendanceId={attendance.id}
-            punch="check_out"
-            alt="Verified punch-out selfie"
-          />
-        )}
-      </section>
+      <AttendanceDetailRecord attendance={attendance} photoAltPrefix="Verified" />
     </div>
   );
 }
