@@ -169,9 +169,11 @@ export type Attendance = {
   check_in_latitude?: string | null;
   check_in_longitude?: string | null;
   check_in_accuracy?: string | null;
+  check_in_distance_meters?: string | null;
   check_out_latitude?: string | null;
   check_out_longitude?: string | null;
   check_out_accuracy?: string | null;
+  check_out_distance_meters?: string | null;
   location_logs?: Array<{
     latitude: string;
     longitude: string;

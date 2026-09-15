@@ -10,6 +10,7 @@ import {
   formatDate,
   formatDuration,
   formatMode,
+  formatOfficeDistance,
   formatStatus,
   formatTime,
 } from "@/lib/presentation";
@@ -80,6 +81,14 @@ export default function AttendanceDetail({
           {attendance.check_in_accuracy
             ? `${attendance.check_in_accuracy}m at check-in`
             : "Not required"}
+        </p>
+        <p>
+          <b>Distance from assigned office:</b>{" "}
+          {formatOfficeDistance(attendance.check_in_distance_meters, attendance.mode)} at check-in
+        </p>
+        <p>
+          <b>Distance from assigned office:</b>{" "}
+          {formatOfficeDistance(attendance.check_out_distance_meters, attendance.mode)} at check-out
         </p>
       </section>
       <section className="grid grid-cols-2 gap-3">

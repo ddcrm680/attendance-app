@@ -57,6 +57,22 @@ export function formatStatus(value: string | null | undefined): string {
     : "—";
 }
 
+export function formatOfficeDistance(
+  value: string | number | null | undefined,
+  mode: string | null | undefined,
+): string {
+  if (value === null || value === undefined || value === "") {
+    return mode === "wfh" ? "Not applicable for WFH" : "Not available";
+  }
+
+  const meters = Number(value);
+  if (!Number.isFinite(meters)) return "Not available";
+
+  return meters >= 1000
+    ? `${(meters / 1000).toFixed(2)} km`
+    : `${Math.round(meters)} m`;
+}
+
 export function formatMode(value: string | null | undefined): string {
   return value === "wfh"
     ? "Work From Home"

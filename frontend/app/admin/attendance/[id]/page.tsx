@@ -8,6 +8,7 @@ import {
   formatDate,
   formatDuration,
   formatMode,
+  formatOfficeDistance,
   formatTime,
 } from "@/lib/presentation";
 import StatusBadge from "@/components/StatusBadge";
@@ -48,6 +49,7 @@ export default function AdminAttendanceDetail({
     latitude?: string | null,
     longitude?: string | null,
     accuracy?: string | null,
+    distance?: string | null,
   ) => (
     <div>
       <p className="font-medium">{label}</p>
@@ -56,6 +58,9 @@ export default function AdminAttendanceDetail({
           ? `${latitude}, ${longitude}`
           : "No verified location"}
         {accuracy ? ` · accuracy ${accuracy}m` : ""}
+      </p>
+      <p className="text-sm text-gray-600">
+        Distance from assigned office: {formatOfficeDistance(distance, attendance.mode)}
       </p>
     </div>
   );
@@ -108,6 +113,7 @@ export default function AdminAttendanceDetail({
             attendance.check_in_latitude,
             attendance.check_in_longitude,
             attendance.check_in_accuracy,
+            attendance.check_in_distance_meters,
           )}
           {attendance.check_in && (
             <SecureAttendancePhoto
@@ -123,6 +129,7 @@ export default function AdminAttendanceDetail({
             attendance.check_out_latitude,
             attendance.check_out_longitude,
             attendance.check_out_accuracy,
+            attendance.check_out_distance_meters,
           )}
           {attendance.check_out && (
             <SecureAttendancePhoto
